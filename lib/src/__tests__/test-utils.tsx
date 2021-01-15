@@ -1,16 +1,17 @@
 import * as React from 'react';
 import * as enzyme from 'enzyme';
+import DayjsUtils from '@date-io/dayjs';
 import LuxonUtils from '@date-io/luxon';
 import MomentUtils from '@date-io/moment';
 import DateFnsUtils from '@date-io/date-fns';
 import TextField from '@material-ui/core/TextField';
-import LocalizationProvider from '../LocalizationProvider';
 import { IUtils } from '@date-io/core/IUtils';
+import { TransitionProps } from '@material-ui/core/transitions';
+import { queryHelpers, Matcher, MatcherOptions } from '@testing-library/react/pure';
+import LocalizationProvider from '../LocalizationProvider';
 import { DatePickerProps } from '../DatePicker';
-import { MaterialUiPickersDate } from '../typings/date';
 import { BasePickerProps } from '../typings/BasePicker';
 import { createClientRender } from './createClientRender';
-import { queryHelpers, Matcher, MatcherOptions } from '@testing-library/react/pure';
 
 export const queryByMuiTest = queryHelpers.queryByAttribute.bind(null, 'data-mui-test');
 export const queryAllByMuiTest = queryHelpers.queryAllByAttribute.bind(null, 'data-mui-test');
@@ -42,25 +43,38 @@ export function getByMuiTest(...args: Parameters<typeof getAllByMuiTest>): Eleme
   );
 }
 
+export const FakeTransitionComponent = React.forwardRef<HTMLDivElement, TransitionProps>(
+  function FakeTransitionComponent({ children }, ref) {
+    // set tabIndex in case it is used as a child of <TrapFocus />
+    return (
+      <div ref={ref} tabIndex={-1}>
+        {children}
+      </div>
+    );
+  }
+);
+
 interface WithUtilsProps {
-  utils: IUtils<MaterialUiPickersDate>;
+  utils: IUtils<any>;
 }
 
-const getUtilClass = () => {
+function getUtilClass() {
   switch (process.env.UTILS) {
-    case 'moment':
-      return MomentUtils;
     case 'date-fns':
       return DateFnsUtils;
+    case 'dayjs':
+      return DayjsUtils;
     case 'luxon':
       return LuxonUtils;
+    case 'moment':
+      return MomentUtils;
     default:
       return DateFnsUtils;
   }
-};
+}
 
 export const UtilClassToUse: any = getUtilClass();
-export const utilsToUse: IUtils<MaterialUiPickersDate> = new UtilClassToUse();
+export const utilsToUse: IUtils<any> = new UtilClassToUse();
 
 const getComponentWithUtils = <P extends WithUtilsProps>(element: React.ReactElement<P>) =>
   React.cloneElement(element, { utils: utilsToUse } as any);
@@ -83,8 +97,8 @@ function createPickerWithState<TValue>(defaultValue: TValue, renderFn: RenderPic
 
     return renderFn({
       value,
-      onChange: date => setDate(date),
-      renderInput: props => <TextField {...props} />,
+      onChange: (date) => setDate(date),
+      renderInput: (props) => <TextField {...props} />,
     });
   };
 
@@ -107,15 +121,19 @@ export function renderPickerWithState<TValue>(
   return render(createPickerWithState(defaultValue, renderPicker));
 }
 
-export const shallowRender = (render: (props: any) => React.ReactElement<any>) => {
+export function shallowRender(render: (props: any) => React.ReactElement<any>) {
   return enzyme.shallow(render({ utils: utilsToUse, classes: {} as any, theme: {} as any }));
-};
+}
 
 // toHaveBeenCalledWith doesn't work with moment because of changing some internal props
-export const toHaveBeenCalledExceptMoment = (mock: jest.Mock<any, any>, params: any[]) => {
+export function toHaveBeenCalledExceptMoment(mock: jest.Mock<any, any>, params: any[]) {
   if (process.env.UTILS === 'moment') {
     return expect(mock).toHaveBeenCalled();
   }
 
   return expect(mock).toHaveBeenCalledWith(...params);
-};
+}
+
+export function itOnlyIf(condition: boolean) {
+  return condition ? it : it.skip;
+}

@@ -1,67 +1,73 @@
 import * as React from 'react';
 import clsx from 'clsx';
 import Typography from '@material-ui/core/Typography';
+import { makeStyles, useTheme } from '@material-ui/core/styles';
 import { Day, DayProps } from './Day';
-import { MaterialUiPickersDate } from '../../typings/date';
 import { useUtils, useNow } from '../../_shared/hooks/useUtils';
 import { PickerOnChangeFn } from '../../_shared/hooks/useViews';
-import { makeStyles, useTheme } from '@material-ui/core/styles';
 import { DAY_SIZE, DAY_MARGIN } from '../../constants/dimensions';
-import { withDefaultProps } from '../../_shared/withDefaultProps';
+import { useDefaultProps } from '../../_shared/withDefaultProps';
+import { PickerSelectionState } from '../../_shared/hooks/usePickerState';
 import { useGlobalKeyDown, keycode } from '../../_shared/hooks/useKeyDown';
 import { SlideTransition, SlideDirection, SlideTransitionProps } from './SlideTransition';
 
-export interface ExportedCalendarProps
-  extends Pick<DayProps, 'disableHighlightToday' | 'showDaysOutsideCurrentMonth'> {
+export interface ExportedCalendarProps<TDate>
+  extends Pick<
+    DayProps<TDate>,
+    'disableHighlightToday' | 'showDaysOutsideCurrentMonth' | 'allowSameDateSelection'
+  > {
   /**
    * Calendar onChange.
    */
-  onChange: PickerOnChangeFn;
+  onChange: PickerOnChangeFn<TDate>;
   /**
    * Custom renderer for day. Check [DayComponentProps api](https://material-ui-pickers.dev/api/Day) @DateIOType.
    */
   renderDay?: (
-    day: MaterialUiPickersDate,
-    selectedDates: MaterialUiPickersDate[],
-    DayComponentProps: DayProps
+    day: TDate,
+    selectedDates: (TDate | null)[],
+    DayComponentProps: DayProps<TDate>
   ) => JSX.Element;
   /**
    * Enables keyboard listener for moving between days in calendar.
+   *
    * @default currentWrapper !== 'static'
    */
   allowKeyboardControl?: boolean;
   /**
    * If `true` renders `LoadingComponent` in calendar instead of calendar view.
    * Can be used to preload information and show it in calendar.
+   *
    * @default false
    */
   loading?: boolean;
   /**
    * Component displaying when passed `loading` true.
+   *
    * @default () => "..."
    */
   renderLoading?: () => React.ReactNode;
 }
 
-export interface CalendarProps extends ExportedCalendarProps {
-  date: MaterialUiPickersDate | MaterialUiPickersDate[];
-  isDateDisabled: (day: MaterialUiPickersDate) => boolean;
+export interface CalendarProps<TDate> extends ExportedCalendarProps<TDate> {
+  date: TDate | null | Array<TDate | null>;
+  isDateDisabled: (day: TDate) => boolean;
   slideDirection: SlideDirection;
-  currentMonth: MaterialUiPickersDate;
+  currentMonth: TDate;
   reduceAnimations: boolean;
-  focusedDay: MaterialUiPickersDate | null;
-  changeFocusedDay: (newFocusedDay: MaterialUiPickersDate) => void;
+  focusedDay: TDate | null;
+  changeFocusedDay: (newFocusedDay: TDate) => void;
   isMonthSwitchingAnimating: boolean;
   onMonthSwitchingAnimationEnd: () => void;
-  className?: string;
   TransitionProps?: Partial<SlideTransitionProps>;
+  className?: string;
 }
 
 const muiComponentConfig = { name: 'MuiPickersCalendar' };
-export const useStyles = makeStyles(theme => {
+export const useStyles = makeStyles((theme) => {
   const weeksContainerHeight = (DAY_SIZE + DAY_MARGIN * 4) * 6;
   return {
-    calendarContainer: {
+    root: {
       minHeight: weeksContainerHeight,
     },
     loadingContainer: {
@@ -98,138 +104,142 @@ export const useStyles = makeStyles(theme => {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      color: theme.palette.text.hint,
+      color: theme.palette.text.secondary,
     },
   };
 }, muiComponentConfig);
 
-export const Calendar: React.FC<CalendarProps> = withDefaultProps(
-  muiComponentConfig,
-  ({
-    date,
-    isMonthSwitchingAnimating,
-    onMonthSwitchingAnimationEnd,
-    focusedDay,
-    changeFocusedDay,
-    onChange,
-    slideDirection,
-    currentMonth,
-    renderDay,
-    reduceAnimations,
+export function Calendar<TDate>(props: CalendarProps<TDate>) {
+  const {
     allowKeyboardControl,
-    isDateDisabled,
-    disableHighlightToday,
-    showDaysOutsideCurrentMonth,
+    allowSameDateSelection,
+    changeFocusedDay,
     className,
+    currentMonth,
+    date,
+    disableHighlightToday,
+    focusedDay,
+    isDateDisabled,
+    isMonthSwitchingAnimating,
     loading,
+    onChange,
+    onMonthSwitchingAnimationEnd,
+    reduceAnimations,
+    renderDay,
     renderLoading = () => <span data-mui-test="loading-progress">...</span>,
+    showDaysOutsideCurrentMonth,
+    slideDirection,
     TransitionProps,
-  }) => {
-    const now = useNow();
-    const utils = useUtils();
-    const theme = useTheme();
-    const classes = useStyles();
+  } = useDefaultProps(props, muiComponentConfig);
 
-    const handleDaySelect = React.useCallback(
-      (day: MaterialUiPickersDate, isFinish: boolean | symbol = true) => {
-        onChange(Array.isArray(date) ? day : utils.mergeDateAndTime(day, date || now), isFinish);
-      },
-      [date, now, onChange, utils]
-    );
+  const now = useNow<TDate>();
+  const utils = useUtils<TDate>();
+  const theme = useTheme();
+  const classes = useStyles();
 
-    const initialDate = Array.isArray(date) ? date[0] : date;
+  const handleDaySelect = React.useCallback(
+    (day: TDate, isFinish: PickerSelectionState = 'finish') => {
+      // TODO possibly buggy line figure out and add tests
+      const finalDate = Array.isArray(date) ? day : utils.mergeDateAndTime(day, date || now);
 
-    const nowFocusedDay = focusedDay || initialDate || now;
-    useGlobalKeyDown(Boolean(allowKeyboardControl), {
-      [keycode.ArrowUp]: () => changeFocusedDay(utils.addDays(nowFocusedDay, -7)),
-      [keycode.ArrowDown]: () => changeFocusedDay(utils.addDays(nowFocusedDay, 7)),
-      [keycode.ArrowLeft]: () =>
-        changeFocusedDay(utils.addDays(nowFocusedDay, theme.direction === 'ltr' ? -1 : 1)),
-      [keycode.ArrowRight]: () =>
-        changeFocusedDay(utils.addDays(nowFocusedDay, theme.direction === 'ltr' ? 1 : -1)),
-      [keycode.Home]: () => changeFocusedDay(utils.startOfWeek(nowFocusedDay)),
-      [keycode.End]: () => changeFocusedDay(utils.endOfWeek(nowFocusedDay)),
-      [keycode.PageUp]: () => changeFocusedDay(utils.getNextMonth(nowFocusedDay)),
-      [keycode.PageDown]: () => changeFocusedDay(utils.getPreviousMonth(nowFocusedDay)),
-    });
+      onChange(finalDate, isFinish);
+    },
+    [date, now, onChange, utils]
+  );
 
-    const currentMonthNumber = utils.getMonth(currentMonth);
-    const selectedDates = (Array.isArray(date) ? date : [date])
-      .filter(Boolean)
-      .map(selectedDateItem => utils.startOfDay(selectedDateItem));
+  const initialDate = Array.isArray(date) ? date[0] : date;
 
-    return (
-      <>
-        <div className={classes.daysHeader}>
-          {utils.getWeekdays().map((day, i) => (
-            <Typography
-              aria-hidden
-              key={day + i.toString()}
-              variant="caption"
-              className={classes.weekDayLabel}
-              children={day.charAt(0).toUpperCase()}
-            />
-          ))}
-        </div>
+  const nowFocusedDay = focusedDay || initialDate || now;
+  useGlobalKeyDown(Boolean(allowKeyboardControl), {
+    [keycode.ArrowUp]: () => changeFocusedDay(utils.addDays(nowFocusedDay, -7)),
+    [keycode.ArrowDown]: () => changeFocusedDay(utils.addDays(nowFocusedDay, 7)),
+    [keycode.ArrowLeft]: () =>
+      changeFocusedDay(utils.addDays(nowFocusedDay, theme.direction === 'ltr' ? -1 : 1)),
+    [keycode.ArrowRight]: () =>
+      changeFocusedDay(utils.addDays(nowFocusedDay, theme.direction === 'ltr' ? 1 : -1)),
+    [keycode.Home]: () => changeFocusedDay(utils.startOfWeek(nowFocusedDay)),
+    [keycode.End]: () => changeFocusedDay(utils.endOfWeek(nowFocusedDay)),
+    [keycode.PageUp]: () => changeFocusedDay(utils.getNextMonth(nowFocusedDay)),
+    [keycode.PageDown]: () => changeFocusedDay(utils.getPreviousMonth(nowFocusedDay)),
+  });
 
-        {loading ? (
-          <div className={classes.loadingContainer}>{renderLoading()}</div>
-        ) : (
-          <SlideTransition
-            transKey={currentMonthNumber}
-            onExited={onMonthSwitchingAnimationEnd}
-            reduceAnimations={reduceAnimations}
-            slideDirection={slideDirection}
-            className={clsx(classes.calendarContainer, className)}
-            {...TransitionProps}
+  const currentMonthNumber = utils.getMonth(currentMonth);
+  const selectedDates = (Array.isArray(date) ? date : [date])
+    .filter(Boolean)
+    .map((selectedDateItem) => selectedDateItem && utils.startOfDay(selectedDateItem));
+
+  return (
+    <React.Fragment>
+      <div className={classes.daysHeader}>
+        {utils.getWeekdays().map((day, i) => (
+          <Typography
+            aria-hidden
+            key={day + i.toString()}
+            variant="caption"
+            className={classes.weekDayLabel}
           >
-            <div role="grid" className={classes.weekContainer}>
-              {utils.getWeekArray(currentMonth).map(week => (
-                <div role="row" key={`week-${week[0]}`} className={classes.week}>
-                  {week.map(day => {
-                    const disabled = isDateDisabled(day);
-                    const isDayInCurrentMonth = utils.getMonth(day) === currentMonthNumber;
+            {day.charAt(0).toUpperCase()}
+          </Typography>
+        ))}
+      </div>
+      {loading ? (
+        <div className={classes.loadingContainer}>{renderLoading()}</div>
+      ) : (
+        <SlideTransition
+          transKey={currentMonthNumber}
+          onExited={onMonthSwitchingAnimationEnd}
+          reduceAnimations={reduceAnimations}
+          slideDirection={slideDirection}
+          className={clsx(classes.root, className)}
+          {...TransitionProps}
+        >
+          <div role="grid" className={classes.weekContainer}>
+            {utils.getWeekArray(currentMonth).map((week) => (
+              <div role="row" key={`week-${week[0]}`} className={classes.week}>
+                {week.map((day) => {
+                  const disabled = isDateDisabled(day);
+                  const isDayInCurrentMonth = utils.getMonth(day) === currentMonthNumber;
 
-                    const dayProps: DayProps = {
-                      key: (day as any)?.toString(),
-                      day: day,
-                      role: 'cell',
-                      isAnimating: isMonthSwitchingAnimating,
-                      disabled: disabled,
-                      allowKeyboardControl: allowKeyboardControl,
-                      focused:
-                        allowKeyboardControl &&
-                        Boolean(focusedDay) &&
-                        utils.isSameDay(day, focusedDay),
-                      today: utils.isSameDay(day, now),
-                      inCurrentMonth: isDayInCurrentMonth,
-                      selected: selectedDates.some(selectedDate =>
-                        utils.isSameDay(selectedDate, day)
-                      ),
-                      disableHighlightToday,
-                      showDaysOutsideCurrentMonth,
-                      focusable:
-                        allowKeyboardControl &&
-                        Boolean(nowFocusedDay) &&
-                        utils.toJsDate(nowFocusedDay).getDate() === utils.toJsDate(day).getDate(),
-                      onDayFocus: changeFocusedDay,
-                      onDaySelect: handleDaySelect,
-                    };
+                  const dayProps: DayProps<TDate> = {
+                    key: (day as any)?.toString(),
+                    day,
+                    role: 'cell',
+                    isAnimating: isMonthSwitchingAnimating,
+                    disabled,
+                    allowKeyboardControl,
+                    allowSameDateSelection,
+                    focused:
+                      allowKeyboardControl &&
+                      Boolean(focusedDay) &&
+                      utils.isSameDay(day, nowFocusedDay),
+                    today: utils.isSameDay(day, now),
+                    inCurrentMonth: isDayInCurrentMonth,
+                    selected: selectedDates.some(
+                      (selectedDate) => selectedDate && utils.isSameDay(selectedDate, day)
+                    ),
+                    disableHighlightToday,
+                    showDaysOutsideCurrentMonth,
+                    focusable:
+                      allowKeyboardControl &&
+                      Boolean(nowFocusedDay) &&
+                      utils.toJsDate(nowFocusedDay).getDate() === utils.toJsDate(day).getDate(),
+                    onDayFocus: changeFocusedDay,
+                    onDaySelect: handleDaySelect,
+                  };
 
-                    return renderDay ? (
-                      renderDay(day, selectedDates, dayProps)
-                    ) : (
-                      <Day {...dayProps} />
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </SlideTransition>
-        )}
-      </>
-    );
-  }
-);
+                  return renderDay ? (
+                    renderDay(day, selectedDates, dayProps)
+                  ) : (
+                    <Day {...dayProps} />
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </SlideTransition>
+      )}
+    </React.Fragment>
+  );
+}
 
 Calendar.displayName = 'Calendar';

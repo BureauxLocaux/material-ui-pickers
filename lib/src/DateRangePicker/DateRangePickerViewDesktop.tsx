@@ -1,11 +1,10 @@
 import * as React from 'react';
-import { DateRange } from './RangeTypes';
-import { DateRangeDay } from './DateRangePickerDay';
-import { useUtils } from '../_shared/hooks/useUtils';
 import { makeStyles } from '@material-ui/core/styles';
-import { MaterialUiPickersDate } from '../typings/date';
+import { DateRange } from './RangeTypes';
+import { useUtils } from '../_shared/hooks/useUtils';
 import { calculateRangePreview } from './date-range-manager';
 import { Calendar, CalendarProps } from '../views/Calendar/Calendar';
+import { DateRangeDay, DateRangeDayProps } from './DateRangePickerDay';
 import { defaultMinDate, defaultMaxDate } from '../constants/prop-types';
 import { ArrowSwitcher, ExportedArrowSwitcherProps } from '../_shared/ArrowSwitcher';
 import {
@@ -19,27 +18,33 @@ import {
   DateValidationProps,
 } from '../_helpers/date-utils';
 
-export interface ExportedDesktopDateRangeCalendarProps {
+export interface ExportedDesktopDateRangeCalendarProps<TDate> {
   /**
    * How many calendars render on **desktop** DateRangePicker.
+   *
    * @default 2
    */
   calendars?: 1 | 2 | 3;
+  /**
+   * Custom renderer for `<DateRangePicker />` days. @DateIOType
+   * @example (date, DateRangeDayProps) => <DateRangePickerDay {...DateRangeDayProps} />
+   */
+  renderDay?: (date: TDate, DateRangeDayProps: DateRangeDayProps<TDate>) => JSX.Element;
 }
 
-interface DesktopDateRangeCalendarProps
-  extends ExportedDesktopDateRangeCalendarProps,
-    CalendarProps,
-    DateValidationProps,
+interface DesktopDateRangeCalendarProps<TDate>
+  extends ExportedDesktopDateRangeCalendarProps<TDate>,
+    Omit<CalendarProps<TDate>, 'renderDay'>,
+    DateValidationProps<TDate>,
     ExportedArrowSwitcherProps {
-  date: DateRange;
-  changeMonth: (date: MaterialUiPickersDate) => void;
+  date: DateRange<TDate | null>;
+  changeMonth: (date: TDate) => void;
   currentlySelectingRangeEnd: 'start' | 'end';
 }
 
 export const useStyles = makeStyles(
-  theme => ({
-    dateRangeContainer: {
+  (theme) => ({
+    root: {
       display: 'flex',
       flexDirection: 'row',
     },
@@ -62,7 +67,7 @@ export const useStyles = makeStyles(
   { name: 'MuiPickersDesktopDateRangeCalendar' }
 );
 
-function getCalendarsArray(calendars: ExportedDesktopDateRangeCalendarProps['calendars']) {
+function getCalendarsArray(calendars: ExportedDesktopDateRangeCalendarProps<unknown>['calendars']) {
   switch (calendars) {
     case 1:
       return [0];
@@ -76,31 +81,36 @@ function getCalendarsArray(calendars: ExportedDesktopDateRangeCalendarProps['cal
   }
 }
 
-export const DateRangePickerViewDesktop: React.FC<DesktopDateRangeCalendarProps> = ({
-  date,
-  calendars = 2,
-  changeMonth,
-  leftArrowButtonProps,
-  leftArrowButtonText,
-  leftArrowIcon,
-  rightArrowButtonProps,
-  rightArrowButtonText,
-  rightArrowIcon,
-  onChange,
-  disableFuture,
-  disablePast,
-  minDate: __minDate,
-  maxDate: __maxDate,
-  currentlySelectingRangeEnd,
-  currentMonth,
-  ...other
-}) => {
-  const utils = useUtils();
+export function DateRangePickerViewDesktop<TDate>(props: DesktopDateRangeCalendarProps<TDate>) {
+  const {
+    date,
+    calendars = 2,
+    changeMonth,
+    leftArrowButtonProps,
+    leftArrowButtonText,
+    leftArrowIcon,
+    rightArrowButtonProps,
+    rightArrowButtonText,
+    rightArrowIcon,
+    onChange,
+    disableFuture,
+    disablePast,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    minDate: __minDate,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    maxDate: __maxDate,
+    currentlySelectingRangeEnd,
+    currentMonth,
+    renderDay = (_, dateRangeProps) => <DateRangeDay {...dateRangeProps} />,
+    ...other
+  } = props;
+
+  const utils = useUtils<TDate>();
   const classes = useStyles();
   const minDate = __minDate || utils.date(defaultMinDate);
   const maxDate = __maxDate || utils.date(defaultMaxDate);
 
-  const [rangePreviewDay, setRangePreviewDay] = React.useState<MaterialUiPickersDate>(null);
+  const [rangePreviewDay, setRangePreviewDay] = React.useState<TDate | null>(null);
 
   const isNextMonthDisabled = useNextMonthDisabled(currentMonth, { disableFuture, maxDate });
   const isPreviousMonthDisabled = usePreviousMonthDisabled(currentMonth, { disablePast, minDate });
@@ -113,14 +123,14 @@ export const DateRangePickerViewDesktop: React.FC<DesktopDateRangeCalendarProps>
   });
 
   const handleDayChange = React.useCallback(
-    (day: MaterialUiPickersDate) => {
+    (day: TDate | null) => {
       setRangePreviewDay(null);
       onChange(day);
     },
     [onChange]
   );
 
-  const handlePreviewDayChange = (newPreviewRequest: MaterialUiPickersDate) => {
+  const handlePreviewDayChange = (newPreviewRequest: TDate) => {
     if (!isWithinRange(utils, newPreviewRequest, date)) {
       setRangePreviewDay(newPreviewRequest);
     } else {
@@ -144,7 +154,7 @@ export const DateRangePickerViewDesktop: React.FC<DesktopDateRangeCalendarProps>
   }, [changeMonth, currentMonth, utils]);
 
   return (
-    <div className={classes.dateRangeContainer}>
+    <div className={classes.root}>
       {getCalendarsArray(calendars).map((_, index) => {
         const monthOnIteration = utils.setMonth(currentMonth, utils.getMonth(currentMonth) + index);
 
@@ -166,8 +176,7 @@ export const DateRangePickerViewDesktop: React.FC<DesktopDateRangeCalendarProps>
               rightArrowIcon={rightArrowIcon}
               text={utils.format(monthOnIteration, 'monthAndYear')}
             />
-
-            <Calendar
+            <Calendar<TDate>
               {...other}
               key={index}
               date={date}
@@ -175,22 +184,22 @@ export const DateRangePickerViewDesktop: React.FC<DesktopDateRangeCalendarProps>
               onChange={handleDayChange}
               currentMonth={monthOnIteration}
               TransitionProps={CalendarTransitionProps}
-              renderDay={(day, _, DayProps) => (
-                <DateRangeDay
-                  isPreviewing={isWithinRange(utils, day, previewingRange)}
-                  isStartOfPreviewing={isStartOfRange(utils, day, previewingRange)}
-                  isEndOfPreviewing={isEndOfRange(utils, day, previewingRange)}
-                  isHighlighting={isWithinRange(utils, day, date)}
-                  isStartOfHighlighting={isStartOfRange(utils, day, date)}
-                  isEndOfHighlighting={isEndOfRange(utils, day, date)}
-                  onMouseEnter={() => handlePreviewDayChange(day)}
-                  {...DayProps}
-                />
-              )}
+              renderDay={(day, __, DayProps) =>
+                renderDay(day, {
+                  isPreviewing: isWithinRange(utils, day, previewingRange),
+                  isStartOfPreviewing: isStartOfRange(utils, day, previewingRange),
+                  isEndOfPreviewing: isEndOfRange(utils, day, previewingRange),
+                  isHighlighting: isWithinRange(utils, day, date),
+                  isStartOfHighlighting: isStartOfRange(utils, day, date),
+                  isEndOfHighlighting: isEndOfRange(utils, day, date),
+                  onMouseEnter: () => handlePreviewDayChange(day),
+                  ...DayProps,
+                })
+              }
             />
           </div>
         );
       })}
     </div>
   );
-};
+}

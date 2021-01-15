@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React from 'react';
 import PropTypes from 'prop-types';
 import cookies from 'next-cookies';
@@ -14,7 +15,7 @@ class MyDocument extends Document<{ theme?: ThemeType }> {
     let pageContext: PageContext | undefined;
 
     const { theme } = cookies(ctx as any);
-    const page = ctx.renderPage(Component => {
+    const page = ctx.renderPage((Component) => {
       const WrappedComponent = (props: any) => {
         pageContext = props.pageContext;
         return <Component {...props} />;
@@ -62,7 +63,6 @@ class MyDocument extends Document<{ theme?: ThemeType }> {
             href="https://fonts.googleapis.com/css?family=Roboto:300,400,500"
           />
           <link data-prism="true" href={prismThemes[theme]} rel="stylesheet" />
-
           <meta name="theme-color" content="#3da044" />
           <link rel="manifest" href="/static/manifest.json" />
           <link rel="apple-touch-icon" sizes="57x57" href="/static/apple-icon-57x57.png" />
@@ -83,9 +83,8 @@ class MyDocument extends Document<{ theme?: ThemeType }> {
             sizes="192x192"
             href="/static/android-icon-192x192.png"
           />
-
           {process.env.NODE_ENV === 'production' && (
-            <>
+            <React.Fragment>
               <script async src="https://www.googletagmanager.com/gtag/js?id=UA-115548316-2" />
               <script
                 dangerouslySetInnerHTML={{
@@ -98,7 +97,7 @@ class MyDocument extends Document<{ theme?: ThemeType }> {
                   `,
                 }}
               />
-            </>
+            </React.Fragment>
           )}
         </Head>
         <body>

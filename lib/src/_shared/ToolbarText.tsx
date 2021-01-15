@@ -1,8 +1,8 @@
 import * as React from 'react';
 import clsx from 'clsx';
 import Typography, { TypographyProps } from '@material-ui/core/Typography';
-import { ExtendMui } from '../typings/helpers';
 import { makeStyles, fade } from '@material-ui/core/styles';
+import { ExtendMui } from '../typings/helpers';
 
 export interface ToolbarTextProps extends ExtendMui<TypographyProps> {
   selected?: boolean;
@@ -10,40 +10,38 @@ export interface ToolbarTextProps extends ExtendMui<TypographyProps> {
 }
 
 export const useStyles = makeStyles(
-  theme => {
+  (theme) => {
     const textColor =
       theme.palette.type === 'light'
         ? theme.palette.primary.contrastText
         : theme.palette.getContrastText(theme.palette.background.default);
 
     return {
-      toolbarTxt: {
+      root: {
         transition: theme.transitions.create('color'),
         color: fade(textColor, 0.54),
+        '&$selected': {
+          color: textColor,
+        },
       },
-      toolbarBtnSelected: {
-        color: textColor,
-      },
+      selected: {},
     };
   },
   { name: 'MuiPickersToolbarText' }
 );
 
-const ToolbarText: React.FC<ToolbarTextProps> = ({
-  className,
-  selected,
-  value: label,
-  ...other
-}) => {
+const ToolbarText: React.FC<ToolbarTextProps> = (props) => {
+  const { className, selected, value, ...other } = props;
   const classes = useStyles();
   return (
     <Typography
-      children={label}
-      className={clsx(classes.toolbarTxt, className, {
-        [classes.toolbarBtnSelected]: selected,
+      className={clsx(classes.root, className, {
+        [classes.selected]: selected,
       })}
       {...other}
-    />
+    >
+      {value}
+    </Typography>
   );
 };
 

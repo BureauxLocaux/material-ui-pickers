@@ -1,17 +1,14 @@
 import * as React from 'react';
-import Picker from '../Picker/Picker';
-import CalendarSkeleton from '../CalendarSkeleton';
+import TextField from '@material-ui/core/TextField';
 import { ReactWrapper } from 'enzyme';
-import { TextField } from '@material-ui/core';
-import { MaterialUiPickersDate } from '../typings/date';
 import { mount, utilsToUse, mountPickerWithState } from './test-utils';
 import {
   DatePicker,
   MobileDatePicker,
-  DesktopDatePicker,
   DatePickerProps,
   StaticDatePicker,
 } from '../DatePicker/DatePicker';
+import { CalendarSkeleton } from '../CalendarSkeleton';
 
 describe('e2e - DatePicker default year format', () => {
   let component: ReactWrapper<DatePickerProps>;
@@ -22,9 +19,7 @@ describe('e2e - DatePicker default year format', () => {
     jest.clearAllMocks();
     component = mount(
       <DatePicker
-        renderInput={props => <TextField {...props} />}
-        DialogProps={{}}
-        PopoverProps={{}}
+        renderInput={(props) => <TextField {...props} />}
         desktopModeMediaQuery="(min-width:720px)"
         value={utilsToUse.date('2018-01-01T00:00:00.000')}
         onChange={onChangeMock}
@@ -46,7 +41,7 @@ describe('e2e - DatePicker default year month format', () => {
   beforeEach(() => {
     component = mount(
       <MobileDatePicker
-        renderInput={props => <TextField {...props} />}
+        renderInput={(props) => <TextField {...props} />}
         onChange={onChangeMock}
         value={date}
         views={['year', 'month']}
@@ -67,7 +62,7 @@ describe('e2e - DatePicker default year month day format', () => {
   beforeEach(() => {
     component = mount(
       <MobileDatePicker
-        renderInput={props => <TextField {...props} />}
+        renderInput={(props) => <TextField {...props} />}
         onChange={onChangeMock}
         value={date}
         views={['year', 'month', 'date']}
@@ -80,57 +75,6 @@ describe('e2e - DatePicker default year month day format', () => {
   });
 });
 
-describe('e2e - DatePicker inline variant', () => {
-  let component: ReactWrapper<DatePickerProps>;
-  const onChangeMock = jest.fn();
-  const onCloseMock = jest.fn();
-  const onOpenMock = jest.fn();
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    component = mount(
-      <DesktopDatePicker
-        renderInput={props => <TextField {...props} />}
-        autoOk
-        onChange={onChangeMock}
-        onClose={onCloseMock}
-        onOpen={onOpenMock}
-        value={utilsToUse.date('2018-01-01T00:00:00.000Z')}
-      />
-    );
-  });
-
-  it('Should open modal with picker on click', () => {
-    component.find('button[data-mui-test="open-picker-from-keyboard"]').simulate('click');
-
-    expect(component.find(Picker)).toHaveLength(1);
-    expect(onOpenMock).toHaveBeenCalled();
-  });
-
-  it.skip('Should close on popover close request', () => {
-    component.find('button[data-mui-test="open-picker-from-keyboard"]').simulate('click');
-    const popoverOnClose = component
-      .find('WithStyles(ForwardRef(Popover))')
-      .prop('onClose') as () => void;
-
-    popoverOnClose();
-
-    expect(component.find(Picker)).toHaveLength(0);
-    expect(onCloseMock).toHaveBeenCalled();
-  });
-
-  it('Should dispatch onChange and close on day select', () => {
-    component.find('button[data-mui-test="open-picker-from-keyboard"]').simulate('click');
-    component
-      .find('Day button')
-      .at(10)
-      .simulate('click');
-
-    expect(onChangeMock).toHaveBeenCalled();
-    expect(component.find('WithStyles(ForwardRef(Popover))').props().open).toBeFalsy();
-  });
-});
-
 describe('e2e - DatePicker onMonthChange', () => {
   let component: ReactWrapper<DatePickerProps>;
   const onChangeMock = jest.fn();
@@ -140,7 +84,7 @@ describe('e2e - DatePicker onMonthChange', () => {
   beforeEach(() => {
     component = mount(
       <MobileDatePicker
-        renderInput={props => <TextField {...props} />}
+        renderInput={(props) => <TextField {...props} />}
         open
         onChange={onChangeMock}
         onMonthChange={onMonthChangeMock}
@@ -150,10 +94,7 @@ describe('e2e - DatePicker onMonthChange', () => {
   });
 
   it('Should dispatch onMonthChange on month switches', () => {
-    component
-      .find('button[data-mui-test="previous-arrow-button"]')
-      .first()
-      .simulate('click');
+    component.find('button[data-mui-test="previous-arrow-button"]').first().simulate('click');
 
     expect(onMonthChangeMock).toBeCalled();
   });
@@ -165,7 +106,7 @@ describe('e2e - DatePicker loading prop', () => {
       <MobileDatePicker
         open
         loading
-        renderInput={props => <TextField {...props} />}
+        renderInput={(props) => <TextField {...props} />}
         onChange={jest.fn()}
         value={utilsToUse.date('2018-01-01T00:00:00.000Z')}
       />
@@ -180,7 +121,7 @@ describe('e2e - DatePicker loading prop', () => {
       <MobileDatePicker
         open
         loading
-        renderInput={props => <TextField {...props} />}
+        renderInput={(props) => <TextField {...props} />}
         onChange={jest.fn()}
         renderLoading={() => <CalendarSkeleton data-mui-test="custom-loading" />}
         value={utilsToUse.date('2018-01-01T00:00:00.000Z')}
@@ -195,7 +136,7 @@ describe('e2e - DatePicker loading prop', () => {
 it('Custom toolbar component', () => {
   const component = mount(
     <MobileDatePicker
-      renderInput={props => <TextField {...props} />}
+      renderInput={(props) => <TextField {...props} />}
       open
       disableHighlightToday
       value={new Date()}
@@ -210,7 +151,7 @@ it('Custom toolbar component', () => {
 it('Selected date is disabled', () => {
   const component = mount(
     <MobileDatePicker
-      renderInput={props => <TextField {...props} />}
+      renderInput={(props) => <TextField {...props} />}
       open
       value={utilsToUse.date('01-01-2019')}
       maxDate={utilsToUse.date('01-01-2018')}
@@ -218,31 +159,18 @@ it('Selected date is disabled', () => {
     />
   );
 
-  expect(
-    component
-      .find('[data-mui-test="calendar-year-text"]')
-      .first()
-      .text()
-  ).toBe('2018');
-  expect(
-    component
-      .find('[data-mui-test="calendar-month-text"]')
-      .first()
-      .text()
-  ).toBe('January');
+  expect(component.find('[data-mui-test="calendar-year-text"]').first().text()).toBe('2018');
+  expect(component.find('[data-mui-test="calendar-month-text"]').first().text()).toBe('January');
 });
 
 it('Should not add to loading queue when synchronous', () => {
-  const component = mountPickerWithState(null as MaterialUiPickersDate, props => (
+  const component = mountPickerWithState(null, (props) => (
     <StaticDatePicker toolbarPlaceholder="Enter Date" {...props} />
   ));
 
   expect(component.find('h4[data-mui-test="datepicker-toolbar-date"]').text()).toBe('Enter Date');
 
-  component
-    .find('button[data-mui-test="day"]')
-    .at(0)
-    .simulate('click');
+  component.find('button[data-mui-test="day"]').at(0).simulate('click');
 
   expect(component.find('h4[data-mui-test="datepicker-toolbar-date"]').text()).not.toBe(
     'Enter Date'

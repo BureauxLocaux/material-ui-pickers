@@ -1,10 +1,8 @@
 import * as React from 'react';
 import * as PropTypes from 'prop-types';
-import { RangeInput, DateRange } from './RangeTypes';
-import { useUtils } from '../_shared/hooks/useUtils';
 import { makeStyles } from '@material-ui/core/styles';
-import { MaterialUiPickersDate } from '../typings/date';
-import { CurrentlySelectingRangeEndProps } from './RangeTypes';
+import { useUtils } from '../_shared/hooks/useUtils';
+import { RangeInput, DateRange, CurrentlySelectingRangeEndProps } from './RangeTypes';
 import { useMaskedInput } from '../_shared/hooks/useMaskedInput';
 import { DateRangeValidationError } from '../_helpers/date-utils';
 import { WrapperVariantContext } from '../wrappers/WrapperVariantContext';
@@ -12,8 +10,8 @@ import { mergeRefs, executeInTheNextEventLoopTick } from '../_helpers/utils';
 import { DateInputProps, MuiTextFieldProps } from '../_shared/PureDateInput';
 
 export const useStyles = makeStyles(
-  theme => ({
-    rangeInputsContainer: {
+  (theme) => ({
+    root: {
       display: 'flex',
       alignItems: 'baseline',
       [theme.breakpoints.down('xs')]: {
@@ -41,11 +39,11 @@ export interface ExportedDateRangePickerInputProps {
    * ```jsx
    * <DateRangePicker
    * renderInput={(startProps, endProps) => (
-       <>
+       <React.Fragment>
          <TextField {...startProps} />
          <Typography> to <Typography>
          <TextField {...endProps} />
-       </>;
+       </React.Fragment>;
      )}
      />
    * ````
@@ -57,7 +55,7 @@ export interface DateRangeInputProps
   extends ExportedDateRangePickerInputProps,
     CurrentlySelectingRangeEndProps,
     Omit<
-      DateInputProps<RangeInput, DateRange>,
+      DateInputProps<RangeInput<any>, DateRange<any>>,
       'validationError' | 'renderInput' | 'forwardedRef'
     > {
   startText: React.ReactNode;
@@ -113,11 +111,11 @@ export const DateRangePickerInput: React.FC<DateRangeInputProps> = ({
     [onChange]
   );
 
-  const handleStartChange = (date: MaterialUiPickersDate, inputString?: string) => {
+  const handleStartChange = (date: unknown, inputString?: string) => {
     lazyHandleChangeCallback([date, utils.date(end)], inputString);
   };
 
-  const handleEndChange = (date: MaterialUiPickersDate, inputString?: string) => {
+  const handleEndChange = (date: unknown, inputString?: string) => {
     lazyHandleChangeCallback([utils.date(start), date], inputString);
   };
 
@@ -179,11 +177,7 @@ export const DateRangePickerInput: React.FC<DateRangeInputProps> = ({
   });
 
   return (
-    <div
-      onBlur={onBlur}
-      className={classes.rangeInputsContainer}
-      ref={mergeRefs([containerRef, forwardedRef])}
-    >
+    <div onBlur={onBlur} className={classes.root} ref={mergeRefs([containerRef, forwardedRef])}>
       {renderInput(startInputProps, endInputProps)}
     </div>
   );

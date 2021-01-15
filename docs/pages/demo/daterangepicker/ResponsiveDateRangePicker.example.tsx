@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { TextField } from '@material-ui/core';
+import TextField from '@material-ui/core/TextField';
 import {
   MobileDateRangePicker,
   DateRangeDelimiter,
@@ -7,38 +7,35 @@ import {
   DateRange,
 } from '@material-ui/pickers';
 
-function ResponsiveDateRangePicker() {
-  const [selectedDate, handleDateChange] = React.useState<DateRange>([null, null]);
+export default function ResponsiveDateRangePicker() {
+  const [value, setValue] = React.useState<DateRange<Date>>([null, null]);
 
   return (
-    <>
+    <React.Fragment>
       <MobileDateRangePicker
         startText="Mobile start"
-        value={selectedDate}
-        onChange={date => handleDateChange(date)}
+        value={value}
+        onChange={(newValue) => setValue(newValue)}
         renderInput={(startProps, endProps) => (
-          <>
+          <React.Fragment>
             <TextField {...startProps} />
             <DateRangeDelimiter> to </DateRangeDelimiter>
             <TextField {...endProps} />
-          </>
+          </React.Fragment>
         )}
       />
-
       <DesktopDateRangePicker
         startText="Desktop start"
-        value={selectedDate}
-        onChange={date => handleDateChange(date)}
+        value={value}
+        onChange={(newValue) => setValue(newValue)}
         renderInput={(startProps, endProps) => (
-          <>
+          <React.Fragment>
             <TextField {...startProps} />
             <DateRangeDelimiter> to </DateRangeDelimiter>
             <TextField {...endProps} />
-          </>
+          </React.Fragment>
         )}
       />
-    </>
+    </React.Fragment>
   );
 }
-
-export default ResponsiveDateRangePicker;

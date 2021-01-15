@@ -1,50 +1,29 @@
 import * as React from 'react';
 import clsx from 'clsx';
-import { useViews } from '../_shared/hooks/useViews';
 import { makeStyles } from '@material-ui/core/styles';
+import { useViews } from '../_shared/hooks/useViews';
+import { ClockView } from '../views/Clock/ClockView';
 import { DateTimePickerView } from '../DateTimePicker';
-import { ParsableDate } from '../constants/prop-types';
 import { BasePickerProps } from '../typings/BasePicker';
-import { MaterialUiPickersDate } from '../typings/date';
 import { DatePickerView } from '../DatePicker/DatePicker';
+import { CalendarView } from '../views/Calendar/CalendarView';
 import { withDefaultProps } from '../_shared/withDefaultProps';
 import { KeyboardDateInput } from '../_shared/KeyboardDateInput';
 import { useIsLandscape } from '../_shared/hooks/useIsLandscape';
 import { DIALOG_WIDTH, VIEW_HEIGHT } from '../constants/dimensions';
+import { PickerSelectionState } from '../_shared/hooks/usePickerState';
 import { WrapperVariantContext } from '../wrappers/WrapperVariantContext';
 import { MobileKeyboardInputView } from '../views/MobileKeyboardInputView';
-import { ClockView, ExportedClockViewProps } from '../views/Clock/ClockView';
-import { WithViewsProps, AnyPickerView, SharedPickerProps } from './SharedPickerProps';
-import { CalendarView, ExportedCalendarViewProps } from '../views/Calendar/CalendarView';
-
-type CalendarAndClockProps = ExportedCalendarViewProps & ExportedClockViewProps;
-
-export type ToolbarComponentProps<
-  TDate = MaterialUiPickersDate,
-  TView extends AnyPickerView = AnyPickerView
-> = CalendarAndClockProps & {
-  ampmInClock?: boolean;
-  date: TDate;
-  dateRangeIcon?: React.ReactNode;
-  getMobileKeyboardInputViewButtonText?: () => string;
-  // TODO move out, cause it is DateTimePickerOnly
-  hideTabs?: boolean;
-  isLandscape: boolean;
-  isMobileKeyboardViewOpen: boolean;
-  onChange: (date: TDate, isFinish?: boolean) => void;
-  openView: TView;
-  setOpenView: (view: TView) => void;
-  timeIcon?: React.ReactNode;
-  toggleMobileKeyboardView: () => void;
-  toolbarFormat?: string;
-  toolbarPlaceholder?: React.ReactNode;
-  toolbarTitle?: React.ReactNode;
-  views: TView[];
-};
+import {
+  WithViewsProps,
+  AnyPickerView,
+  SharedPickerProps,
+  CalendarAndClockProps,
+} from './SharedPickerProps';
 
 export interface ExportedPickerProps<TView extends AnyPickerView>
   extends Omit<BasePickerProps, 'value' | 'onChange'>,
-    CalendarAndClockProps,
+    CalendarAndClockProps<unknown>,
     WithViewsProps<TView> {
   // TODO move out, cause it is DateTimePickerOnly
   hideTabs?: boolean;
@@ -54,19 +33,19 @@ export interface ExportedPickerProps<TView extends AnyPickerView>
 
 export type PickerProps<
   TView extends AnyPickerView,
-  TInputValue = ParsableDate,
-  TDateValue = MaterialUiPickersDate
+  TInputValue = any,
+  TDateValue = any
 > = ExportedPickerProps<TView> & SharedPickerProps<TInputValue, TDateValue>;
 
 const muiComponentConfig = { name: 'MuiPickersBasePicker' };
 
 export const useStyles = makeStyles(
   {
-    container: {
+    root: {
       display: 'flex',
       flexDirection: 'column',
     },
-    containerLandscape: {
+    landscape: {
       flexDirection: 'row',
     },
     pickerView: {
@@ -86,8 +65,8 @@ export const useStyles = makeStyles(
 
 const MobileKeyboardTextFieldProps = { fullWidth: true };
 
-const isTimePickerByViews = (views: DateTimePickerView[]) =>
-  !views.some(view => view === 'year' || view === 'month' || view === 'date');
+const isDatePickerView = (view: DateTimePickerView) =>
+  view === 'year' || view === 'month' || view === 'date';
 
 function Picker({
   className,
@@ -109,15 +88,16 @@ function Picker({
   const classes = useStyles();
   const isLandscape = useIsLandscape(views, orientation);
   const wrapperVariant = React.useContext(WrapperVariantContext);
-  const handleDateChange = React.useCallback(
-    (date: MaterialUiPickersDate, isFinish?: boolean | symbol) => {
-      onDateChange(date, wrapperVariant, isFinish);
-    },
-    [onDateChange, wrapperVariant]
-  );
 
   const toShowToolbar =
     typeof showToolbar === 'undefined' ? wrapperVariant !== 'desktop' : showToolbar;
+
+  const handleDateChange = React.useCallback(
+    (date: unknown, selectionState?: PickerSelectionState) => {
+      onDateChange(date, wrapperVariant, selectionState);
+    },
+    [onDateChange, wrapperVariant]
+  );
 
   const { openView, nextView, previousView, setOpenView, handleChangeAndOpenNext } = useViews({
     views,
@@ -129,8 +109,8 @@ function Picker({
 
   return (
     <div
-      className={clsx(classes.container, className, {
-        [classes.containerLandscape]: isLandscape,
+      className={clsx(classes.root, className, {
+        [classes.landscape]: isLandscape,
       })}
     >
       {toShowToolbar && (
@@ -165,7 +145,7 @@ function Picker({
             />
           </MobileKeyboardInputView>
         ) : (
-          <>
+          <React.Fragment>
             {(openView === 'year' || openView === 'month' || openView === 'date') && (
               <CalendarView
                 date={date}
@@ -187,12 +167,12 @@ function Picker({
                 onChange={handleChangeAndOpenNext}
                 openNextView={() => setOpenView(nextView)}
                 openPreviousView={() => setOpenView(previousView)}
-                nextViewAvailable={!Boolean(nextView)}
-                previousViewAvailable={!Boolean(previousView)}
-                showViewSwitcher={isTimePickerByViews(views) && wrapperVariant === 'desktop'}
+                nextViewAvailable={!nextView}
+                previousViewAvailable={!previousView || isDatePickerView(previousView)}
+                showViewSwitcher={wrapperVariant === 'desktop'}
               />
             )}
-          </>
+          </React.Fragment>
         )}
       </div>
     </div>

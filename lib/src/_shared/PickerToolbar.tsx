@@ -3,21 +3,21 @@ import clsx from 'clsx';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
+import { makeStyles } from '@material-ui/core/styles';
 import Toolbar, { ToolbarProps } from '@material-ui/core/Toolbar';
 import { ExtendMui } from '../typings/helpers';
-import { PenIcon } from '../_shared/icons/PenIcon';
+import { PenIcon } from './icons/Pen';
 import { CalendarIcon } from './icons/CalendarIcon';
-import { makeStyles } from '@material-ui/core/styles';
-import { ToolbarComponentProps } from '../Picker/Picker';
+import { ToolbarComponentProps } from '../Picker/SharedPickerProps';
 
 export const useStyles = makeStyles(
-  theme => {
+  (theme) => {
     const toolbarBackground =
       theme.palette.type === 'light'
         ? theme.palette.primary.main
         : theme.palette.background.default;
     return {
-      toolbar: {
+      root: {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
@@ -72,22 +72,20 @@ const PickerToolbar: React.SFC<PickerToolbarProps> = ({
   penIconClassName,
   toggleMobileKeyboardView,
   toolbarTitle,
-  ...other
 }) => {
   const classes = useStyles();
 
   return (
     <Toolbar
       data-mui-test="picker-toolbar"
-      className={clsx(classes.toolbar, { [classes.toolbarLandscape]: isLandscape }, className)}
-      {...other}
+      className={clsx(classes.root, { [classes.toolbarLandscape]: isLandscape }, className)}
     >
       <Typography data-mui-test="picker-toolbar-title" color="inherit" variant="overline">
         {toolbarTitle}
       </Typography>
       <Grid
         container
-        justify="space-between"
+        justifyContent="space-between"
         className={classes.dateTitleContainer}
         direction={isLandscape ? landscapeDirection : 'row'}
         alignItems={isLandscape ? 'flex-start' : 'flex-end'}

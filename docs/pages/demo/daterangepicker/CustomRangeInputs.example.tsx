@@ -1,22 +1,23 @@
-import React, { useState } from 'react';
+import * as React from 'react';
 import { DateRangePicker, DateRange } from '@material-ui/pickers';
 
-function CustomRangeInputs() {
-  const [selectedDate, handleDateChange] = useState<DateRange>([null, null]);
+export default function CustomRangeInputs() {
+  const [selectedDate, handleDateChange] = React.useState<DateRange<Date>>([null, null]);
 
   return (
     <DateRangePicker
       label="Advanced keyboard"
       value={selectedDate}
-      onChange={date => handleDateChange(date)}
+      onChange={(date) => handleDateChange(date)}
       renderInput={(startProps, endProps) => (
-        <>
-          <input ref={startProps.ref as React.Ref<HTMLInputElement>} {...startProps.inputProps} />
-          <input ref={endProps.ref as React.Ref<HTMLInputElement>} {...endProps.inputProps} />
-        </>
+        <React.Fragment>
+          <input
+            ref={startProps.inputRef as React.Ref<HTMLInputElement>}
+            {...startProps.inputProps}
+          />
+          <input ref={endProps.inputRef as React.Ref<HTMLInputElement>} {...endProps.inputProps} />
+        </React.Fragment>
       )}
     />
   );
 }
-
-export default CustomRangeInputs;

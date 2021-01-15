@@ -3,10 +3,10 @@ import { DateTimePickerToolbar } from './DateTimePickerToolbar';
 import { ExportedClockViewProps } from '../views/Clock/ClockView';
 import { ResponsiveWrapper } from '../wrappers/ResponsiveWrapper';
 import { pick12hOr24hFormat } from '../_helpers/text-field-helper';
-import { useParsedDate } from '../_shared/hooks/date-helpers-hooks';
+import { useParsedDate, OverrideParsableDateProps } from '../_shared/hooks/date-helpers-hooks';
 import { ExportedCalendarViewProps } from '../views/Calendar/CalendarView';
-import { makePickerWithStateAndWrapper } from '../Picker/makePickerWithState';
-import { DesktopWrapper, MobileWrapper, StaticWrapper } from '../wrappers/Wrapper';
+import { makePickerWithStateAndWrapper, SharedPickerProps } from '../Picker/makePickerWithState';
+import { DesktopWrapper, MobileWrapper, StaticWrapper, SomeWrapper } from '../wrappers/Wrapper';
 import { WithViewsProps, AllSharedPickerProps } from '../Picker/SharedPickerProps';
 import { DateAndTimeValidationError, validateDateAndTime } from './date-time-utils';
 import { makeValidationHook, ValidationProps } from '../_shared/hooks/useValidation';
@@ -14,11 +14,16 @@ import { ParsableDate, defaultMinDate, defaultMaxDate } from '../constants/prop-
 
 export type DateTimePickerView = 'year' | 'date' | 'month' | 'hours' | 'minutes' | 'seconds';
 
-export interface BaseDateTimePickerProps
+type DateTimePickerViewsProps<TDate> = OverrideParsableDateProps<
+  TDate,
+  ExportedClockViewProps<TDate> & ExportedCalendarViewProps<TDate>,
+  'minDate' | 'maxDate' | 'minTime' | 'maxTime'
+>;
+
+export interface BaseDateTimePickerProps<TDate>
   extends WithViewsProps<'year' | 'date' | 'month' | 'hours' | 'minutes'>,
     ValidationProps<DateAndTimeValidationError, ParsableDate>,
-    ExportedClockViewProps,
-    ExportedCalendarViewProps {
+    DateTimePickerViewsProps<TDate> {
   /**
    * To show tabs.
    */
@@ -34,11 +39,11 @@ export interface BaseDateTimePickerProps
   /**
    * Minimal selectable moment of time with binding to date, to set min time in each day use `minTime`.
    */
-  minDateTime?: ParsableDate;
+  minDateTime?: ParsableDate<TDate>;
   /**
    * Minimal selectable moment of time with binding to date, to set max time in each day use `maxTime`.
    */
-  maxDateTime?: ParsableDate;
+  maxDateTime?: ParsableDate<TDate>;
   /**
    * Date format, that is displaying in toolbar.
    */
@@ -48,7 +53,6 @@ export interface BaseDateTimePickerProps
 function useInterceptProps({
   ampm,
   inputFormat,
-  mask,
   maxDate: __maxDate = defaultMaxDate,
   maxDateTime: __maxDateTime,
   maxTime: __maxTime,
@@ -59,7 +63,7 @@ function useInterceptProps({
   orientation = 'portrait',
   views = ['year', 'date', 'hours', 'minutes'],
   ...other
-}: BaseDateTimePickerProps & AllSharedPickerProps) {
+}: BaseDateTimePickerProps<unknown> & AllSharedPickerProps) {
   const utils = useUtils();
   const minTime = useParsedDate(__minTime);
   const maxTime = useParsedDate(__maxTime);
@@ -81,14 +85,16 @@ function useInterceptProps({
     orientation,
     showToolbar: true,
     showTabs: true,
+    allowSameDateSelection: true,
     minDate: minDateTime || minDate,
     minTime: minDateTime || minTime,
     maxDate: maxDateTime || maxDate,
     maxTime: maxDateTime || maxTime,
     disableIgnoringDatePartForTimeValidation: Boolean(minDateTime || maxDateTime),
     acceptRegex: willUseAmPm ? /[\dap]/gi : /\d/gi,
-    mask: mask || (willUseAmPm ? '__/__/____ __:__ _M' : '__/__/____ __:__'),
-    inputFormat: pick12hOr24hFormat(inputFormat, ampm, {
+    mask: '__/__/____ __:__',
+    disableMaskedInput: willUseAmPm,
+    inputFormat: pick12hOr24hFormat(inputFormat, willUseAmPm, {
       localized: utils.formats.keyboardDateTime,
       '12h': utils.formats.keyboardDateTime12h,
       '24h': utils.formats.keyboardDateTime24h,
@@ -100,7 +106,7 @@ function useInterceptProps({
 const useValidation = makeValidationHook<
   DateAndTimeValidationError,
   ParsableDate,
-  BaseDateTimePickerProps
+  BaseDateTimePickerProps<unknown>
 >(validateDateAndTime);
 
 const dateTimePickerConfig = {
@@ -109,42 +115,45 @@ const dateTimePickerConfig = {
   DefaultToolbarComponent: DateTimePickerToolbar,
 };
 
-export const DateTimePicker = makePickerWithStateAndWrapper<BaseDateTimePickerProps>(
+type DateTimePickerComponent<TWrapper extends SomeWrapper> = <TDate>(
+  props: BaseDateTimePickerProps<TDate> & SharedPickerProps<TDate, TWrapper>
+) => JSX.Element;
+
+export const DateTimePicker = makePickerWithStateAndWrapper<BaseDateTimePickerProps<unknown>>(
   ResponsiveWrapper,
   {
-    name: 'MuiPickersDateTimePicker',
+    name: 'MuiDateTimePicker',
     ...dateTimePickerConfig,
   }
-);
+) as DateTimePickerComponent<typeof ResponsiveWrapper>;
 
 export type DateTimePickerProps = React.ComponentProps<typeof DateTimePicker>;
 
-export const DesktopDateTimePicker = makePickerWithStateAndWrapper<BaseDateTimePickerProps>(
-  DesktopWrapper,
-  {
-    name: 'MuiPickersDesktopDateTimePicker',
-    ...dateTimePickerConfig,
-  }
-);
+export const DesktopDateTimePicker = makePickerWithStateAndWrapper<
+  BaseDateTimePickerProps<unknown>
+>(DesktopWrapper, {
+  name: 'MuiDesktopDateTimePicker',
+  ...dateTimePickerConfig,
+}) as DateTimePickerComponent<typeof DesktopWrapper>;
 
 export type DesktopDateTimePickerProps = React.ComponentProps<typeof DesktopDateTimePicker>;
 
-export const MobileDateTimePicker = makePickerWithStateAndWrapper<BaseDateTimePickerProps>(
+export const MobileDateTimePicker = makePickerWithStateAndWrapper<BaseDateTimePickerProps<unknown>>(
   MobileWrapper,
   {
-    name: 'MuiPickersMobileDateTimePicker',
+    name: 'MuiMobileDateTimePicker',
     ...dateTimePickerConfig,
   }
-);
+) as DateTimePickerComponent<typeof MobileWrapper>;
 
 export type MobileDateTimePickerProps = React.ComponentProps<typeof MobileDateTimePicker>;
 
-export const StaticDateTimePicker = makePickerWithStateAndWrapper<BaseDateTimePickerProps>(
+export const StaticDateTimePicker = makePickerWithStateAndWrapper<BaseDateTimePickerProps<unknown>>(
   StaticWrapper,
   {
-    name: 'MuiPickersStaticDateTimePicker',
+    name: 'MuiStaticDateTimePicker',
     ...dateTimePickerConfig,
   }
-);
+) as DateTimePickerComponent<typeof StaticWrapper>;
 
 export type StaticDateTimePickerProps = React.ComponentProps<typeof StaticDateTimePicker>;

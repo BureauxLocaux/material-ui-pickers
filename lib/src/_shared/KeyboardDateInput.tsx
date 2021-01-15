@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as PropTypes from 'prop-types';
 import IconButton from '@material-ui/core/IconButton';
 import InputAdornment from '@material-ui/core/InputAdornment';
+import { useForkRef } from '@material-ui/core/utils';
 import { useUtils } from './hooks/useUtils';
 import { CalendarIcon } from './icons/CalendarIcon';
 import { useMaskedInput } from './hooks/useMaskedInput';
@@ -10,8 +11,9 @@ import { getTextFieldAriaText } from '../_helpers/text-field-helper';
 
 export const KeyboardDateInput: React.FC<DateInputProps & DateInputRefs> = ({
   containerRef,
+  inputRef = null,
+  forwardedRef = null,
   disableOpenPicker: hideOpenPickerButton,
-  forwardedRef,
   getOpenDialogAriaText = getTextFieldAriaText,
   InputAdornmentProps,
   InputProps,
@@ -22,18 +24,17 @@ export const KeyboardDateInput: React.FC<DateInputProps & DateInputRefs> = ({
   ...other
 }) => {
   const utils = useUtils();
+  const inputRefHandle = useForkRef(inputRef, forwardedRef);
   const textFieldProps = useMaskedInput(other);
   const adornmentPosition = InputAdornmentProps?.position || 'end';
 
   return renderInput({
     ref: containerRef,
-    inputRef: forwardedRef,
+    inputRef: inputRefHandle,
     ...textFieldProps,
     InputProps: {
       ...InputProps,
-      [`${adornmentPosition}Adornment`]: hideOpenPickerButton ? (
-        undefined
-      ) : (
+      [`${adornmentPosition}Adornment`]: hideOpenPickerButton ? undefined : (
         <InputAdornment position={adornmentPosition} {...InputAdornmentProps}>
           <IconButton
             edge={adornmentPosition}

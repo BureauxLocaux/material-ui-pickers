@@ -1,14 +1,9 @@
-import { IUtils } from '@date-io/core/IUtils';
 import { ParsableDate } from '../constants/prop-types';
-import { MaterialUiPickersDate } from '../typings/date';
 import { MuiPickersAdapter } from '../_shared/hooks/useUtils';
 
 type Meridiem = 'am' | 'pm' | null;
 
-export const getMeridiem = (
-  date: MaterialUiPickersDate,
-  utils: IUtils<MaterialUiPickersDate>
-): Meridiem => {
+export const getMeridiem = (date: unknown, utils: MuiPickersAdapter): Meridiem => {
   if (!date) {
     return null;
   }
@@ -27,11 +22,11 @@ export const convertValueToMeridiem = (value: number, meridiem: Meridiem, ampm: 
   return value;
 };
 
-export const convertToMeridiem = (
-  time: MaterialUiPickersDate,
+export const convertToMeridiem = <TDate>(
+  time: TDate,
   meridiem: 'am' | 'pm',
   ampm: boolean,
-  utils: IUtils<MaterialUiPickersDate>
+  utils: MuiPickersAdapter<TDate>
 ) => {
   const newHoursAmount = convertValueToMeridiem(utils.getHours(time), meridiem, ampm);
   return utils.setHours(time, newHoursAmount);
@@ -63,7 +58,7 @@ const getAngleValue = (step: number, offsetX: number, offsetY: number) => {
   deg %= 360;
 
   const value = Math.floor(deg / step) || 0;
-  const delta = Math.pow(x, 2) + Math.pow(y, 2);
+  const delta = x ** 2 + y ** 2;
   const distance = Math.sqrt(delta);
 
   return { value, distance };
@@ -78,29 +73,29 @@ export const getMinutes = (offsetX: number, offsetY: number, step = 1) => {
 };
 
 export const getHours = (offsetX: number, offsetY: number, ampm: boolean) => {
-  let { value, distance } = getAngleValue(30, offsetX, offsetY);
-  value = value || 12;
+  const { value, distance } = getAngleValue(30, offsetX, offsetY);
+  let hour = value || 12;
 
   if (!ampm) {
     if (distance < 90) {
-      value += 12;
-      value %= 24;
+      hour += 12;
+      hour %= 24;
     }
   } else {
-    value %= 12;
+    hour %= 12;
   }
 
-  return value;
+  return hour;
 };
 
-export function getSecondsInDay(date: MaterialUiPickersDate, utils: MuiPickersAdapter) {
+export function getSecondsInDay(date: unknown, utils: MuiPickersAdapter) {
   return utils.getHours(date) * 3600 + utils.getMinutes(date) * 60 + utils.getSeconds(date);
 }
 
 export const createIsAfterIgnoreDatePart = (
   disableIgnoringDatePartForTimeValidation: boolean,
   utils: MuiPickersAdapter
-) => (dateLeft: MaterialUiPickersDate, dateRight: MaterialUiPickersDate) => {
+) => (dateLeft: unknown, dateRight: unknown) => {
   if (disableIgnoringDatePartForTimeValidation) {
     return utils.isAfter(dateLeft, dateRight);
   }
@@ -108,17 +103,17 @@ export const createIsAfterIgnoreDatePart = (
   return getSecondsInDay(dateLeft, utils) > getSecondsInDay(dateRight, utils);
 };
 
-export interface TimeValidationProps {
+export interface TimeValidationProps<TDate> {
   /**
    * Min time acceptable time.
    * For input validation date part of passed object will be ignored if `disableIgnoringDatePartForTimeValidation` not specified.
    */
-  minTime?: MaterialUiPickersDate;
+  minTime?: TDate;
   /**
    * Max time acceptable time.
    * For input validation date part of passed object will be ignored if `disableIgnoringDatePartForTimeValidation` not specified.
    */
-  maxTime?: MaterialUiPickersDate;
+  maxTime?: TDate;
   /**
    * Dynamically check if time is disabled or not.
    * If returns `false` appropriate time point will ot be acceptable.
@@ -126,20 +121,21 @@ export interface TimeValidationProps {
   shouldDisableTime?: (timeValue: number, clockType: 'hours' | 'minutes' | 'seconds') => boolean;
   /**
    * Do not ignore date part when validating min/max time.
+   *
    * @default false
    */
   disableIgnoringDatePartForTimeValidation?: boolean;
 }
 
-export const validateTime = (
+export const validateTime = <TDate>(
   utils: MuiPickersAdapter,
-  value: MaterialUiPickersDate | ParsableDate,
+  value: TDate | ParsableDate<TDate>,
   {
     minTime,
     maxTime,
     shouldDisableTime,
     disableIgnoringDatePartForTimeValidation,
-  }: TimeValidationProps
+  }: TimeValidationProps<TDate>
 ) => {
   const date = utils.date(value);
   const isAfterComparingFn = createIsAfterIgnoreDatePart(

@@ -1,16 +1,17 @@
 import * as React from 'react';
-import PickerToolbar from '../_shared/PickerToolbar';
 import Typography from '@material-ui/core/Typography';
-import { useUtils } from '../_shared/hooks/useUtils';
 import { makeStyles } from '@material-ui/core/styles';
-import { ToolbarComponentProps } from '../Picker/Picker';
+import PickerToolbar from '../_shared/PickerToolbar';
+import { useUtils } from '../_shared/hooks/useUtils';
 import { ToolbarButton } from '../_shared/ToolbarButton';
 import { withDefaultProps } from '../_shared/withDefaultProps';
+import { ToolbarComponentProps } from '../Picker/SharedPickerProps';
 import { DateRange, CurrentlySelectingRangeEndProps } from './RangeTypes';
 
 const muiComponentConfig = { name: 'MuiPickersDateRangePickerToolbarProps' };
 export const useStyles = makeStyles(
   {
+    root: {},
     penIcon: {
       position: 'relative',
       top: 4,
@@ -61,6 +62,7 @@ export const DateRangePickerToolbar: React.FC<DateRangePickerToolbarProps> = wit
 
     return (
       <PickerToolbar
+        className={classes.root}
         toolbarTitle={toolbarTitle}
         isMobileKeyboardViewOpen={isMobileKeyboardViewOpen}
         toggleMobileKeyboardView={toggleMobileKeyboardView}
@@ -69,14 +71,14 @@ export const DateRangePickerToolbar: React.FC<DateRangePickerToolbarProps> = wit
       >
         <div className={classes.dateTextContainer}>
           <ToolbarButton
-            variant={Boolean(start) ? 'h5' : 'h6'}
+            variant={start !== null ? 'h5' : 'h6'}
             value={startDateValue}
             selected={currentlySelectingRangeEnd === 'start'}
             onClick={() => setCurrentlySelectingRangeEnd('start')}
           />
           <Typography variant="h5">&nbsp;{'–'}&nbsp;</Typography>
           <ToolbarButton
-            variant={Boolean(end) ? 'h5' : 'h6'}
+            variant={end !== null ? 'h5' : 'h6'}
             value={endDateValue}
             selected={currentlySelectingRangeEnd === 'end'}
             onClick={() => setCurrentlySelectingRangeEnd('end')}

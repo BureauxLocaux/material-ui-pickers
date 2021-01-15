@@ -1,10 +1,10 @@
 import * as React from 'react';
 import clsx from 'clsx';
-import ToolbarText from './ToolbarText';
 import Button, { ButtonProps } from '@material-ui/core/Button';
-import { ExtendMui } from '../typings/helpers';
 import { makeStyles } from '@material-ui/core/styles';
 import { TypographyProps } from '@material-ui/core/Typography';
+import ToolbarText from './ToolbarText';
+import { ExtendMui } from '../typings/helpers';
 
 export interface ToolbarButtonProps extends ExtendMui<ButtonProps, 'value' | 'variant'> {
   align?: TypographyProps['align'];
@@ -16,7 +16,7 @@ export interface ToolbarButtonProps extends ExtendMui<ButtonProps, 'value' | 'va
 
 export const useStyles = makeStyles(
   {
-    toolbarBtn: {
+    root: {
       padding: 0,
       minWidth: '16px',
       textTransform: 'none',
@@ -25,22 +25,15 @@ export const useStyles = makeStyles(
   { name: 'MuiPickersToolbarButton' }
 );
 
-export const ToolbarButton: React.FunctionComponent<ToolbarButtonProps> = ({
-  align,
-  className,
-  selected,
-  typographyClassName,
-  value,
-  variant,
-  ...other
-}) => {
+export const ToolbarButton: React.FunctionComponent<ToolbarButtonProps> = (props) => {
+  const { align, className, selected, typographyClassName, value, variant, ...other } = props;
   const classes = useStyles();
 
   return (
     <Button
       data-mui-test="toolbar-button"
       variant="text"
-      className={clsx(classes.toolbarBtn, className)}
+      className={clsx(classes.root, className)}
       {...other}
     >
       <ToolbarText

@@ -1,11 +1,11 @@
 import * as React from 'react';
 import clsx from 'clsx';
+import { makeStyles, fade } from '@material-ui/core/styles';
 import { DAY_MARGIN } from '../constants/dimensions';
 import { useUtils } from '../_shared/hooks/useUtils';
-import { makeStyles, fade } from '@material-ui/core/styles';
 import { Day, DayProps, areDayPropsEqual } from '../views/Calendar/Day';
 
-interface DateRangeDayProps extends DayProps {
+export interface DateRangeDayProps<TDate> extends DayProps<TDate> {
   isHighlighting: boolean;
   isEndOfHighlighting: boolean;
   isStartOfHighlighting: boolean;
@@ -25,8 +25,8 @@ const startBorderStyle = {
 };
 
 const useStyles = makeStyles(
-  theme => ({
-    rangeIntervalDay: {
+  (theme) => ({
+    root: {
       '&:first-child $rangeIntervalDayPreview': {
         ...startBorderStyle,
         borderLeftColor: theme.palette.divider,
@@ -96,19 +96,20 @@ const useStyles = makeStyles(
   { name: 'MuiPickersDateRangeDay' }
 );
 
-export const PureDateRangeDay = ({
-  className,
-  day,
-  inCurrentMonth,
-  isEndOfHighlighting,
-  isEndOfPreviewing,
-  isHighlighting,
-  isPreviewing,
-  isStartOfHighlighting,
-  isStartOfPreviewing,
-  selected,
-  ...other
-}: DateRangeDayProps) => {
+export function PureDateRangeDay<TDate>(props: DateRangeDayProps<TDate>) {
+  const {
+    className,
+    day,
+    inCurrentMonth,
+    isEndOfHighlighting,
+    isEndOfPreviewing,
+    isHighlighting,
+    isPreviewing,
+    isStartOfHighlighting,
+    isStartOfPreviewing,
+    selected,
+    ...other
+  } = props;
   const utils = useUtils();
   const classes = useStyles();
 
@@ -121,7 +122,7 @@ export const PureDateRangeDay = ({
   return (
     <div
       data-mui-test={shouldRenderHighlight ? 'DateRangeHighlight' : undefined}
-      className={clsx(classes.rangeIntervalDay, {
+      className={clsx(classes.root, {
         [classes.rangeIntervalDayHighlight]: shouldRenderHighlight,
         [classes.rangeIntervalDayHighlightEnd]: isEndOfHighlighting || isEndOfMonth,
         [classes.rangeIntervalDayHighlightStart]: isStartOfHighlighting || isStartOfMonth,
@@ -135,10 +136,11 @@ export const PureDateRangeDay = ({
           [classes.rangeIntervalDayPreviewStart]: isStartOfPreviewing || isStartOfMonth,
         })}
       >
-        <Day
-          allowKeyboardControl={false}
-          disableMargin
+        <Day<any>
           {...other}
+          disableMargin
+          allowSameDateSelection
+          allowKeyboardControl={false}
           day={day}
           selected={selected}
           inCurrentMonth={inCurrentMonth}
@@ -156,7 +158,7 @@ export const PureDateRangeDay = ({
       </div>
     </div>
   );
-};
+}
 
 PureDateRangeDay.displayName = 'DateRangeDay';
 
@@ -170,4 +172,4 @@ export const DateRangeDay = React.memo(PureDateRangeDay, (prevProps, nextProps) 
     prevProps.isStartOfPreviewing === nextProps.isStartOfPreviewing &&
     areDayPropsEqual(prevProps, nextProps)
   );
-});
+}) as typeof PureDateRangeDay;

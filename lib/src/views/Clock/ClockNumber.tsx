@@ -2,9 +2,10 @@ import * as React from 'react';
 import clsx from 'clsx';
 import Typography from '@material-ui/core/Typography';
 import ButtonBase from '@material-ui/core/ButtonBase';
-import { onSpaceOrEnter } from '../../_helpers/utils';
 import { makeStyles, fade } from '@material-ui/core/styles';
-import { FORCE_FINISH_PICKER } from '../../_shared/hooks/usePickerState';
+import { onSpaceOrEnter } from '../../_helpers/utils';
+import { useCanAutoFocus } from '../../_shared/hooks/useCanAutoFocus';
+import { PickerSelectionState } from '../../_shared/hooks/usePickerState';
 
 const positions: Record<number, [number, number]> = {
   0: [0, 40],
@@ -39,18 +40,18 @@ export interface ClockNumberProps {
   index: number;
   isInner?: boolean;
   label: string;
-  onSelect: (isFinish: boolean | symbol) => void;
+  onSelect: (isFinish: PickerSelectionState) => void;
   selected: boolean;
 }
 
 export const useStyles = makeStyles(
-  theme => {
+  (theme) => {
     const size = 32;
     const clockNumberColor =
-      theme.palette.type === 'light' ? theme.palette.text.primary : theme.palette.text.hint;
+      theme.palette.type === 'light' ? theme.palette.text.primary : theme.palette.text.secondary;
 
     return {
-      clockNumber: {
+      root: {
         outline: 0,
         width: size,
         height: size,
@@ -78,18 +79,12 @@ export const useStyles = makeStyles(
   { name: 'MuiPickersClockNumber' }
 );
 
-export const ClockNumber: React.FC<ClockNumberProps> = ({
-  disabled,
-  getClockNumberText,
-  index,
-  isInner,
-  label,
-  onSelect,
-  selected,
-}) => {
-  const ref = React.useRef<HTMLSpanElement>(null);
+export const ClockNumber: React.FC<ClockNumberProps> = (props) => {
+  const { disabled, getClockNumberText, index, isInner, label, onSelect, selected } = props;
   const classes = useStyles();
-  const className = clsx(classes.clockNumber, {
+  const canAutoFocus = useCanAutoFocus();
+  const ref = React.useRef<HTMLSpanElement>(null);
+  const className = clsx(classes.root, {
     [classes.clockNumberSelected]: selected,
     [classes.clockNumberDisabled]: disabled,
   });
@@ -103,10 +98,10 @@ export const ClockNumber: React.FC<ClockNumberProps> = ({
   }, [index]);
 
   React.useEffect(() => {
-    if (selected && ref.current) {
+    if (canAutoFocus && selected && ref.current) {
       ref.current.focus();
     }
-  }, [selected]);
+  }, [canAutoFocus, selected]);
 
   return (
     <ButtonBase
@@ -119,7 +114,7 @@ export const ClockNumber: React.FC<ClockNumberProps> = ({
       className={className}
       style={transformStyle}
       aria-label={getClockNumberText(label)}
-      onKeyDown={onSpaceOrEnter(() => onSelect(FORCE_FINISH_PICKER))}
+      onKeyDown={onSpaceOrEnter(() => onSelect('finish'))}
     >
       <Typography variant={isInner ? 'body2' : 'body1'}>{label}</Typography>
     </ButtonBase>

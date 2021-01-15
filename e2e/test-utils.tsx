@@ -1,4 +1,5 @@
 import * as React from 'react';
+import parse from 'date-fns/parseISO';
 import DateFnsAdapter from '@material-ui/pickers/adapter/date-fns';
 import TextField, { TextFieldProps } from '@material-ui/core/TextField';
 import { mount } from 'cypress-react-unit-test';
@@ -6,7 +7,7 @@ import { DIALOG_WIDTH } from '../lib/src/constants/dimensions';
 import { LocalizationProvider, StaticDatePickerProps } from '@material-ui/pickers';
 
 // Time of the first commit to the pickers ❤️
-const momentInTime = new Date('2017-10-07T19:36:00.000Z');
+const momentInTime = parse('2017-10-07T19:36:00.000');
 const mockRequiredProps = {
   reduceAnimations: true, // speedup tests
   value: momentInTime,
@@ -58,7 +59,7 @@ export function mountPickerWithState(
   function PickerWithState() {
     const [value, setDate] = React.useState<any>(momentInTime);
 
-    return createPicker({ ...mockRequiredProps, value, onChange: date => setDate(date) });
+    return createPicker({ ...mockRequiredProps, value, onChange: (date) => setDate(date) });
   }
 
   mountPicker(() => <PickerWithState />);

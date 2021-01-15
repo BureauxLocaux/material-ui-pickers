@@ -1,6 +1,6 @@
 {
   "name": "@material-ui/pickers",
-  "version": "4.0.0-alpha.8",
+  "version": "4.0.0-alpha.12",
   "private": true,
   "description": "React components, that implements material design pickers for material-ui v4",
   "main": "./src/index.ts",
@@ -32,9 +32,13 @@
     "email": "dmtr.kovalenko@outlook.com"
   },
   "peerDependencies": {
-    "@material-ui/core": "^4.10.1",
-    "@material-ui/lab": "^4.0.0-alpha.54",
+    "@material-ui/core": "^5.0.0-alpha.5",
+    "@material-ui/lab": "^5.0.0-alpha.5",
     "@types/react": "^16.8.6",
+    "date-fns": "^2.0.0",
+    "dayjs": "^1.8.17",
+    "luxon": "^1.21.3",
+    "moment": "^2.24.0",
     "react": "^16.8.4",
     "react-dom": "^16.8.4"
   },
@@ -44,13 +48,25 @@
     },
     "@material-ui/lab": {
       "optional": true
+    },
+    "date-fns": {
+      "optional": true
+    },
+    "dayjs": {
+      "optional": true
+    },
+    "luxon": {
+      "optional": true
+    },
+    "moment": {
+      "optional": true
     }
   },
   "dependencies": {
-    "@date-io/date-fns": "^2.6.0",
-    "@date-io/dayjs": "^2.6.0",
-    "@date-io/luxon": "^2.6.0",
-    "@date-io/moment": "^2.6.0",
+    "@date-io/date-fns": "^2.8.0",
+    "@date-io/dayjs": "^2.8.0",
+    "@date-io/luxon": "^2.8.0",
+    "@date-io/moment": "^2.8.0",
     "clsx": "^1.0.2",
     "prop-types": "^15.7.2",
     "react-transition-group": "^4.4.1",
@@ -58,8 +74,9 @@
   },
   "scripts": {
     "test": "jest",
-    "test:typescript": "rimraf src/__tests__/dist && tsc -p src/__tests__/tsconfig.json",
+    "test:typescript": "yarn rimraf src/__tests__/dist && tsc -p src/__tests__/tsconfig.json",
     "test:date-fns": "UTILS=date-fns yarn test",
+    "test:dayjs": "UTILS=dayjs yarn test",
     "test:luxon": "UTILS=luxon yarn test",
     "test:moment": "UTILS=moment yarn test",
     "start": "rollup --config rollup.config.dev.js --watch & npx tsc --watch",
@@ -69,7 +86,7 @@
     "build:typescript": "tsc --project tsconfig.json && tsc -p tsconfig.adapters.json",
     "build": "yarn build:typescript && yarn build:bundle && yarn build:prepare-files",
     "build:analyze": "yarn build",
-    "release": "yarn test && yarn version && yarn build && yarn publish --non-interactive --tag next build"
+    "release": "yarn build && yarn publish --tag -f next build"
   },
   "devDependencies": {
     "@babel/core": "^7.9.6",
@@ -82,46 +99,44 @@
     "@babel/preset-react": "^7.9.4",
     "@babel/runtime": "^7.9.6",
     "@cypress/webpack-preprocessor": "^4.1.1",
-    "@material-ui/core": "^4.9.14",
-    "@material-ui/icons": "^4.9.1",
+    "@date-io/core": "^2.8.0",
+    "@material-ui/core": "^5.0.0-alpha.5",
+    "@material-ui/icons": "^5.0.0-alpha.4",
+    "@material-ui/lab": "^5.0.0-alpha.5",
     "@rollup/plugin-babel": "^5.0.3",
-    "@rollup/plugin-commonjs": "^12.0.0",
-    "@rollup/plugin-node-resolve": "^8.0.0",
-    "@testing-library/jest-dom": "^5.10.1",
+    "@rollup/plugin-commonjs": "^14.0.0",
+    "@rollup/plugin-node-resolve": "^8.4.0",
+    "@testing-library/jest-dom": "^5.11.0",
     "@types/enzyme": "^3.10.5",
     "@types/enzyme-adapter-react-16": "^1.0.3",
-    "@types/fs-extra": "^8.1.0",
+    "@types/fs-extra": "^9.0.1",
     "@types/jest": "^25.2.1",
-    "@types/luxon": "^1.11.0",
+    "@types/luxon": "^1.24.3",
     "@types/prop-types": "^15.5.8",
     "@types/react": "^16.9.35",
     "@types/react-dom": "^16.9.8",
     "@types/react-transition-group": "^4.2.4",
-    "@typescript-eslint/eslint-plugin": "^1.6.0",
-    "@typescript-eslint/parser": "^1.6.0",
     "babel-loader": "^8.1.0",
-    "babel-plugin-optimize-clsx": "^2.6.0",
+    "babel-plugin-optimize-clsx": "^2.6.1",
     "babel-plugin-react-remove-properties": "^0.3.0",
-    "codecov": "^3.6.5",
+    "codecov": "^3.7.2",
     "cross-env": "^7.0.2",
-    "cypress-react-unit-test": "^3.3.1",
     "date-fns": "^2.12.0",
+    "dayjs": "^1.8.27",
     "enzyme": "^3.11.0",
     "enzyme-adapter-react-16": "^1.15.2",
-    "eslint-plugin-react": "^7.19.0",
-    "eslint-plugin-react-hooks": "^1.6.0",
     "fs-extra": "^9.0.0",
     "full-icu": "^1.3.1",
-    "jest": "^26.0.1",
+    "jest": "^26.1.0",
     "luxon": "^1.23.0",
     "moment": "2.27.0",
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
-    "rollup": "^2.10.2",
+    "rollup": "^2.18.1",
     "rollup-plugin-replace": "^2.2.0",
     "rollup-plugin-size-snapshot": "^0.12.0",
     "rollup-plugin-terser": "^6.1.0",
     "ts-jest": "^25.5.1",
-    "typescript": "^3.8.3"
+    "typescript": "^3.9.6"
   }
 }

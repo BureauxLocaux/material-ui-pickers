@@ -1,62 +1,68 @@
 import * as React from 'react';
-import Year from './Year';
-import { MaterialUiPickersDate } from '../../typings/date';
-import { useUtils, useNow } from '../../_shared/hooks/useUtils';
 import { makeStyles, useTheme } from '@material-ui/core/styles';
+// eslint-disable-next-line import/no-named-as-default
+import Year from './Year';
+import { useUtils, useNow } from '../../_shared/hooks/useUtils';
+import { PickerOnChangeFn } from '../../_shared/hooks/useViews';
+import { findClosestEnabledDate } from '../../_helpers/date-utils';
+import { PickerSelectionState } from '../../_shared/hooks/usePickerState';
 import { WrapperVariantContext } from '../../wrappers/WrapperVariantContext';
 import { useGlobalKeyDown, keycode as keys } from '../../_shared/hooks/useKeyDown';
 
-export interface ExportedYearSelectionProps {
+export interface ExportedYearSelectionProps<TDate> {
   /**
    * Callback firing on year change @DateIOType.
    */
-  onYearChange?: (date: MaterialUiPickersDate) => void;
+  onYearChange?: (date: unknown) => void;
   /**
    * Disable specific years dynamically.
    * Works like `shouldDisableDate` but for year selection view. @DateIOType.
    */
-  shouldDisableYear?: (day: MaterialUiPickersDate) => boolean;
+  shouldDisableYear?: (day: unknown) => boolean;
 }
 
-export interface YearSelectionProps extends ExportedYearSelectionProps {
+export interface YearSelectionProps<TDate> extends ExportedYearSelectionProps<TDate> {
   allowKeyboardControl?: boolean;
-  changeFocusedDay: (day: MaterialUiPickersDate) => void;
-  date: MaterialUiPickersDate;
+  changeFocusedDay: (day: TDate) => void;
+  date: TDate;
   disableFuture?: boolean | null | undefined;
   disablePast?: boolean | null | undefined;
-  isDateDisabled: (day: MaterialUiPickersDate) => boolean;
-  maxDate: MaterialUiPickersDate;
-  minDate: MaterialUiPickersDate;
-  onChange: (date: MaterialUiPickersDate, isFinish: boolean) => void;
+  isDateDisabled: (day: TDate) => boolean;
+  maxDate: TDate;
+  minDate: TDate;
+  onChange: PickerOnChangeFn<TDate>;
 }
 
 export const useStyles = makeStyles(
   {
-    container: {
+    root: {
       display: 'flex',
       flexDirection: 'row',
       flexWrap: 'wrap',
       overflowY: 'auto',
       height: '100%',
+      margin: '0 4px',
     },
   },
   { name: 'MuiPickersYearSelection' }
 );
 
-export const YearSelection: React.FC<YearSelectionProps> = ({
+export function YearSelection<TDate>({
   allowKeyboardControl,
   changeFocusedDay,
   date: __dateOrNull,
   isDateDisabled,
   maxDate,
   minDate,
+  disableFuture,
+  disablePast,
   onChange,
   onYearChange,
   shouldDisableYear,
-}) => {
-  const now = useNow();
+}: YearSelectionProps<TDate>) {
+  const now = useNow<TDate>();
   const theme = useTheme();
-  const utils = useUtils();
+  const utils = useUtils<TDate>();
   const classes = useStyles();
 
   const selectedDate = __dateOrNull || now;
@@ -65,34 +71,47 @@ export const YearSelection: React.FC<YearSelectionProps> = ({
   const selectedYearRef = React.useRef<HTMLButtonElement>(null);
   const [focusedYear, setFocusedYear] = React.useState<number | null>(currentYear);
 
-  React.useEffect(() => {
-    if (allowKeyboardControl && selectedYearRef.current && selectedYearRef.current.scrollIntoView) {
-      try {
-        selectedYearRef.current.scrollIntoView({
-          block: wrapperVariant === 'static' ? 'nearest' : 'center',
-        });
-      } catch (e) {
-        // call without arguments in case when scrollIntoView works improperly (e.g. Firefox 52-57)
-        selectedYearRef.current.scrollIntoView();
-      }
-    }
-  }, []); // eslint-disable-line
-
   const handleYearSelection = React.useCallback(
-    (year: number, isFinish = true) => {
+    (year: number, isFinish: PickerSelectionState = 'finish') => {
+      const submitDate = (newDate: TDate | null) => {
+        onChange(newDate, isFinish);
+        changeFocusedDay(newDate || now);
+
+        if (onYearChange) {
+          onYearChange(newDate);
+        }
+      };
+
       const newDate = utils.setYear(selectedDate, year);
       if (isDateDisabled(newDate)) {
-        return;
-      }
+        const closestEnabledDate = findClosestEnabledDate({
+          utils,
+          date: newDate,
+          minDate,
+          maxDate,
+          disablePast: Boolean(disablePast),
+          disableFuture: Boolean(disableFuture),
+          shouldDisableDate: isDateDisabled,
+        });
 
-      if (onYearChange) {
-        onYearChange(newDate);
+        submitDate(closestEnabledDate);
+      } else {
+        submitDate(newDate);
       }
-
-      onChange(newDate, isFinish);
-      changeFocusedDay(newDate);
     },
-    [changeFocusedDay, selectedDate, isDateDisabled, onChange, onYearChange, utils]
+    [
+      utils,
+      now,
+      selectedDate,
+      isDateDisabled,
+      onChange,
+      changeFocusedDay,
+      onYearChange,
+      minDate,
+      maxDate,
+      disablePast,
+      disableFuture,
+    ]
   );
 
   const focusYear = React.useCallback(
@@ -114,32 +133,30 @@ export const YearSelection: React.FC<YearSelectionProps> = ({
   });
 
   return (
-    <div>
-      <div className={classes.container}>
-        {utils.getYearRange(minDate, maxDate).map(year => {
-          const yearNumber = utils.getYear(year);
-          const selected = yearNumber === currentYear;
+    <div className={classes.root}>
+      {utils.getYearRange(minDate, maxDate).map((year) => {
+        const yearNumber = utils.getYear(year);
+        const selected = yearNumber === currentYear;
 
-          return (
-            <Year
-              key={utils.format(year, 'year')}
-              selected={selected}
-              value={yearNumber}
-              onSelect={handleYearSelection}
-              allowKeyboardControl={allowKeyboardControl}
-              focused={yearNumber === focusedYear}
-              ref={selected ? selectedYearRef : undefined}
-              disabled={
-                // Make sure that final date (with month and day included) will be enabled
-                isDateDisabled(utils.setYear(selectedDate, yearNumber)) ||
-                (shouldDisableYear && shouldDisableYear(year))
-              }
-            >
-              {utils.format(year, 'year')}
-            </Year>
-          );
-        })}
-      </div>
+        return (
+          <Year
+            key={utils.format(year, 'year')}
+            selected={selected}
+            value={yearNumber}
+            onSelect={handleYearSelection}
+            allowKeyboardControl={allowKeyboardControl}
+            focused={yearNumber === focusedYear}
+            ref={selected ? selectedYearRef : undefined}
+            disabled={
+              (disablePast && utils.isBeforeYear(year, now)) ||
+              (disableFuture && utils.isAfterYear(year, now)) ||
+              (shouldDisableYear && shouldDisableYear(year))
+            }
+          >
+            {utils.format(year, 'year')}
+          </Year>
+        );
+      })}
     </div>
   );
-};
+}

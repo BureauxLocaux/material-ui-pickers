@@ -4,15 +4,15 @@ import { DateRangeDelimiterProps } from '../DateRangePicker/DateRangeDelimiter';
 import {
   ToolbarComponentProps,
   LocalizationProviderProps,
-  ClockViewProps,
-  CalendarProps,
-  ClockProps,
-  DayProps,
+  PickersClockViewProps,
+  PickersCalendarProps,
+  PickersClockProps,
+  PickersDayProps,
   DatePickerProps,
   MobileDatePickerProps,
   DesktopDatePickerProps,
   StaticDatePickerProps,
-  CalendarViewProps,
+  PickersCalendarViewProps,
   TimePickerProps,
   MobileTimePickerProps,
   DesktopTimePickerProps,
@@ -28,8 +28,8 @@ import {
 } from '..';
 
 export interface MuiPickersComponentsPropsList {
-  MuiPickersDay: DayProps;
-  MuiPickersCalendarView: CalendarViewProps;
+  MuiPickersDay: PickersDayProps<unknown>;
+  MuiPickersCalendarView: PickersCalendarViewProps<unknown>;
   MuiPickersDatePicker: DatePickerProps;
   MuiPickersMobileDatePicker: MobileDatePickerProps;
   MuiPickersDesktopDatePicker: DesktopDatePickerProps;
@@ -42,9 +42,9 @@ export interface MuiPickersComponentsPropsList {
   MuiPickersMobileDateTimePicker: MobileDateTimePickerProps;
   MuiPickersDesktopDateTimePicker: DesktopDateTimePickerProps;
   MuiPickersStaticDateTimePicker: StaticDateTimePickerProps;
-  MuiPickersCalendar: CalendarProps;
-  MuiPickersClockView: ClockViewProps;
-  MuiPickersClock: ClockProps;
+  MuiPickersCalendar: PickersCalendarProps<unknown>;
+  MuiPickersClockView: PickersClockViewProps<unknown>;
+  MuiPickersClock: PickersClockProps<unknown>;
   MuiPickersBasePicker: PickerProps<any, any, any>;
   MuiPickersLocalizationProvider: LocalizationProviderProps;
   MuiPickersTimePickerToolbar: ToolbarComponentProps;

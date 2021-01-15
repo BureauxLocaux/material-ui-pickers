@@ -2,42 +2,50 @@ import * as React from 'react';
 import * as PropTypes from 'prop-types';
 import clsx from 'clsx';
 import Fade from '@material-ui/core/Fade';
+import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import { DatePickerView } from '../../DatePicker';
 import { SlideDirection } from './SlideTransition';
-import { makeStyles } from '@material-ui/core/styles';
 import { useUtils } from '../../_shared/hooks/useUtils';
-import { MaterialUiPickersDate } from '../../typings/date';
 import { FadeTransitionGroup } from './FadeTransitionGroup';
 import { DateValidationProps } from '../../_helpers/date-utils';
-import { ArrowDropDownIcon } from '../../_shared/icons/ArrowDropDownIcon';
+import { ArrowDropDownIcon } from '../../_shared/icons/ArrowDropDown';
 import { ArrowSwitcher, ExportedArrowSwitcherProps } from '../../_shared/ArrowSwitcher';
 import {
   usePreviousMonthDisabled,
   useNextMonthDisabled,
 } from '../../_shared/hooks/date-helpers-hooks';
 
-export interface CalendarHeaderProps
+export type ExportedCalendarHeaderProps<TDate> = Pick<
+  CalendarHeaderProps<TDate>,
+  | 'leftArrowIcon'
+  | 'rightArrowIcon'
+  | 'leftArrowButtonProps'
+  | 'rightArrowButtonProps'
+  | 'leftArrowButtonText'
+  | 'rightArrowButtonText'
+  | 'getViewSwitchingButtonText'
+>;
+
+export interface CalendarHeaderProps<TDate>
   extends ExportedArrowSwitcherProps,
-    Omit<DateValidationProps, 'shouldDisableDate'> {
+    Omit<DateValidationProps<TDate>, 'shouldDisableDate'> {
   view: DatePickerView;
   views: DatePickerView[];
-  currentMonth: MaterialUiPickersDate;
+  currentMonth: TDate;
   /**
    * Get aria-label text for switching between views button.
    */
   getViewSwitchingButtonText?: (currentView: DatePickerView) => string;
   reduceAnimations: boolean;
   changeView: (view: DatePickerView) => void;
-  minDate: MaterialUiPickersDate;
-  maxDate: MaterialUiPickersDate;
-  onMonthChange: (date: MaterialUiPickersDate, slideDirection: SlideDirection) => void;
+  onMonthChange: (date: TDate, slideDirection: SlideDirection) => void;
 }
 
 export const useStyles = makeStyles(
-  theme => ({
-    switchHeader: {
+  (theme) => ({
+    root: {
       display: 'flex',
       alignItems: 'center',
       marginTop: 16,
@@ -82,26 +90,28 @@ function getSwitchingViewAriaText(view: DatePickerView) {
     : 'calendar view is open, switch to year view';
 }
 
-export const CalendarHeader: React.SFC<CalendarHeaderProps> = ({
-  view: currentView,
-  views,
-  currentMonth: month,
-  changeView,
-  minDate,
-  maxDate,
-  disablePast,
-  disableFuture,
-  onMonthChange,
-  reduceAnimations,
-  leftArrowButtonProps,
-  rightArrowButtonProps,
-  leftArrowIcon,
-  rightArrowIcon,
-  leftArrowButtonText = 'previous month',
-  rightArrowButtonText = 'next month',
-  getViewSwitchingButtonText = getSwitchingViewAriaText,
-}) => {
-  const utils = useUtils();
+export function CalendarHeader<TDate>(props: CalendarHeaderProps<TDate>) {
+  const {
+    view: currentView,
+    views,
+    currentMonth: month,
+    changeView,
+    minDate,
+    maxDate,
+    disablePast,
+    disableFuture,
+    onMonthChange,
+    reduceAnimations,
+    leftArrowButtonProps,
+    rightArrowButtonProps,
+    leftArrowIcon,
+    rightArrowIcon,
+    leftArrowButtonText = 'previous month',
+    rightArrowButtonText = 'next month',
+    getViewSwitchingButtonText = getSwitchingViewAriaText,
+  } = props;
+
+  const utils = useUtils<TDate>();
   const classes = useStyles();
 
   const selectNextMonth = () => onMonthChange(utils.getNextMonth(month), 'left');
@@ -116,7 +126,7 @@ export const CalendarHeader: React.SFC<CalendarHeaderProps> = ({
     }
 
     if (views.length === 2) {
-      changeView(views.find(view => view !== currentView) || views[0]);
+      changeView(views.find((view) => view !== currentView) || views[0]);
     } else {
       // switching only between first 2
       const nextIndexToOpen = views.indexOf(currentView) !== 0 ? 0 : 1;
@@ -125,8 +135,8 @@ export const CalendarHeader: React.SFC<CalendarHeaderProps> = ({
   };
 
   return (
-    <>
-      <div className={classes.switchHeader}>
+    <React.Fragment>
+      <div className={classes.root}>
         <div className={classes.monthTitleContainer} onClick={toggleView}>
           <FadeTransitionGroup
             reduceAnimations={reduceAnimations}
@@ -138,8 +148,9 @@ export const CalendarHeader: React.SFC<CalendarHeaderProps> = ({
               align="center"
               variant="subtitle1"
               className={classes.monthText}
-              children={utils.format(month, 'month')}
-            />
+            >
+              {utils.format(month, 'month')}
+            </Typography>
           </FadeTransitionGroup>
           <FadeTransitionGroup
             reduceAnimations={reduceAnimations}
@@ -150,10 +161,10 @@ export const CalendarHeader: React.SFC<CalendarHeaderProps> = ({
               data-mui-test="calendar-year-text"
               align="center"
               variant="subtitle1"
-              children={utils.format(month, 'year')}
-            />
+            >
+              {utils.format(month, 'year')}
+            </Typography>
           </FadeTransitionGroup>
-
           {views.length > 1 && (
             <IconButton
               size="small"
@@ -170,7 +181,6 @@ export const CalendarHeader: React.SFC<CalendarHeaderProps> = ({
             </IconButton>
           )}
         </div>
-
         <Fade in={currentView === 'date'}>
           <ArrowSwitcher
             leftArrowButtonProps={leftArrowButtonProps}
@@ -186,17 +196,17 @@ export const CalendarHeader: React.SFC<CalendarHeaderProps> = ({
           />
         </Fade>
       </div>
-    </>
+    </React.Fragment>
   );
-};
+}
 
-CalendarHeader.displayName = 'CalendarHeader';
+CalendarHeader.displayName = 'PickersCalendarHeader';
 
 CalendarHeader.propTypes = {
-  leftArrowIcon: PropTypes.node,
-  rightArrowIcon: PropTypes.node,
   leftArrowButtonText: PropTypes.string,
+  leftArrowIcon: PropTypes.node,
   rightArrowButtonText: PropTypes.string,
+  rightArrowIcon: PropTypes.node,
 };
 
 export default CalendarHeader;

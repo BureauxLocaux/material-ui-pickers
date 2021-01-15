@@ -64,8 +64,8 @@ export function checkMaskIsValidForCurrentFormat(
   const isMaskValid =
     inferredFormatPatternWith2Digits === mask && inferredFormatPatternWith1Digits === mask;
 
-  // @ts-ignore
-  if (!isMaskValid && process.env.NODE_ENV !== 'production') {
+  // @ts-ignore Ignore this warning for luxon because it is appearing mostly always (related to the formats structure of luxon itself)
+  if (!isMaskValid && utils.lib !== 'luxon' && process.env.NODE_ENV !== 'production') {
     console.warn(
       `The mask "${mask}" you passed is not valid for the format used ${format}. Falling down to uncontrolled not-masked input.`
     );
@@ -94,9 +94,9 @@ export const maskedDateFormatter = (mask: string, acceptRegexp: RegExp) => (valu
       if (i === value.length - 1 && nextMaskChar && nextMaskChar !== MASK_USER_INPUT_SYMBOL) {
         // when cursor at the end of mask part (e.g. month) prerender next symbol "21" -> "21/"
         return formattedChar ? formattedChar + nextMaskChar : '';
-      } else {
-        return formattedChar;
       }
+
+      return formattedChar;
     })
     .join('');
 };

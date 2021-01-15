@@ -1,18 +1,19 @@
 import * as React from 'react';
 import clsx from 'clsx';
-import PickerToolbar from '../_shared/PickerToolbar';
 import Typography from '@material-ui/core/Typography';
+import { makeStyles } from '@material-ui/core/styles';
+import PickerToolbar from '../_shared/PickerToolbar';
 import { DatePickerView } from './DatePicker';
 import { useUtils } from '../_shared/hooks/useUtils';
-import { makeStyles } from '@material-ui/core/styles';
-import { ToolbarComponentProps } from '../Picker/Picker';
 import { withDefaultProps } from '../_shared/withDefaultProps';
+import { ToolbarComponentProps } from '../Picker/SharedPickerProps';
 import { isYearAndMonthViews, isYearOnlyView } from '../_helpers/date-utils';
 
 const muiPickersComponentConfig = { name: 'MuiPickersDatePickerToolbar' };
 
 export const useStyles = makeStyles(
   {
+    root: {},
     dateTitleLandscape: {
       margin: 'auto 16px auto auto',
     },
@@ -33,8 +34,10 @@ export const DatePickerToolbar: React.FC<ToolbarComponentProps> = withDefaultPro
     isMobileKeyboardViewOpen,
     toggleMobileKeyboardView,
     toolbarFormat,
+    onChange,
     toolbarPlaceholder = '––',
     toolbarTitle = 'SELECT DATE',
+    ...other
   }) => {
     const utils = useUtils();
     const classes = useStyles();
@@ -66,19 +69,22 @@ export const DatePickerToolbar: React.FC<ToolbarComponentProps> = withDefaultPro
 
     return (
       <PickerToolbar
+        className={classes.root}
         toolbarTitle={toolbarTitle}
         isMobileKeyboardViewOpen={isMobileKeyboardViewOpen}
         toggleMobileKeyboardView={toggleMobileKeyboardView}
         isLandscape={isLandscape}
         penIconClassName={classes.penIcon}
+        {...other}
       >
         <Typography
           variant="h4"
-          children={dateText}
           data-mui-test="datepicker-toolbar-date"
           align={isLandscape ? 'left' : 'center'}
           className={clsx({ [classes.dateTitleLandscape]: isLandscape })}
-        />
+        >
+          {dateText}
+        </Typography>
       </PickerToolbar>
     );
   }

@@ -18,21 +18,19 @@ interface WithWrapperProps<TInputProps = DateInputProps> {
 
 /* Creates a component that rendering modal/popover/nothing and spreading props down to text field */
 export function makeWrapperComponent<
-  TInputProps extends DateInputPropsLike<TInputValue, TDateValue>,
-  TInputValue,
-  TDateValue,
+  TInputProps extends DateInputPropsLike<any, any>,
   TWrapper extends SomeWrapper = any
 >(
   Wrapper: TWrapper,
   { KeyboardDateInputComponent, PureDateInputComponent }: MakePickerOptions<TInputProps>
 ) {
   function WrapperComponent(
-    props: Partial<BasePickerProps<TInputValue, TDateValue>> &
+    props: Partial<BasePickerProps<any, any>> &
       WithWrapperProps<TInputProps> &
       Partial<OmitInnerWrapperProps<ResponsiveWrapperProps> & StaticWrapperProps>
   ) {
     const {
-      autoOk,
+      disableCloseOnSelect,
       cancelText,
       children,
       clearable,
@@ -47,7 +45,7 @@ export function makeWrapperComponent<
       onClose,
       onOpen,
       open,
-      PopoverProps,
+      PopperProps,
       showTabs,
       todayText,
       value,
@@ -63,6 +61,7 @@ export function makeWrapperComponent<
         clearable={clearable}
         clearText={clearText}
         DialogProps={DialogProps}
+        PopperProps={PopperProps}
         okText={okText}
         todayText={todayText}
         cancelText={cancelText}

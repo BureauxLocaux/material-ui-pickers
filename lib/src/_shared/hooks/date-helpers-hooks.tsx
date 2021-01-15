@@ -1,9 +1,17 @@
 import * as React from 'react';
 import { useUtils } from './useUtils';
-import { MaterialUiPickersDate } from '../../typings/date';
+import { ParsableDate } from '../../constants/prop-types';
 
-export function useParsedDate(possiblyUnparsedValue: any): MaterialUiPickersDate | undefined {
-  const utils = useUtils();
+export type OverrideParsableDateProps<TDate, TProps, TKey extends keyof TProps> = Omit<
+  TProps,
+  TKey
+> &
+  Partial<Record<TKey, ParsableDate<TDate>>>;
+
+export function useParsedDate<TDate>(
+  possiblyUnparsedValue: ParsableDate<TDate>
+): TDate | undefined {
+  const utils = useUtils<TDate>();
   return React.useMemo(
     () =>
       typeof possiblyUnparsedValue === 'undefined' ? undefined : utils.date(possiblyUnparsedValue)!,
@@ -14,12 +22,12 @@ export function useParsedDate(possiblyUnparsedValue: any): MaterialUiPickersDate
 interface MonthValidationOptions {
   disablePast?: boolean;
   disableFuture?: boolean;
-  minDate: MaterialUiPickersDate;
-  maxDate: MaterialUiPickersDate;
+  minDate: unknown;
+  maxDate: unknown;
 }
 
 export function useNextMonthDisabled(
-  month: MaterialUiPickersDate,
+  month: unknown,
   { disableFuture, maxDate }: Pick<MonthValidationOptions, 'disableFuture' | 'maxDate'>
 ) {
   const utils = useUtils();
@@ -33,7 +41,7 @@ export function useNextMonthDisabled(
 }
 
 export function usePreviousMonthDisabled(
-  month: MaterialUiPickersDate,
+  month: unknown,
   { disablePast, minDate }: Pick<MonthValidationOptions, 'disablePast' | 'minDate'>
 ) {
   const utils = useUtils();

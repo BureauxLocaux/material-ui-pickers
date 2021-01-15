@@ -1,41 +1,27 @@
-// Note that most of use cases are covered in cypress tests e2e/integration/DateRange.spec.ts
 import * as React from 'react';
 import { isWeekend } from 'date-fns';
-import { mount, utilsToUse } from './test-utils';
-import { TextField, TextFieldProps } from '@material-ui/core';
-import { DesktopDateRangePicker } from '../DateRangePicker/DateRangePicker';
+import { screen, waitFor } from '@testing-library/react';
+import TextField, { TextFieldProps } from '@material-ui/core/TextField';
+import { utilsToUse, getAllByMuiTest } from './test-utils';
+import { DesktopDateRangePicker, StaticDateRangePicker } from '..';
+import { createClientRender, fireEvent } from './createClientRender';
 
 const defaultRangeRenderInput = (startProps: TextFieldProps, endProps: TextFieldProps) => (
-  <>
+  <React.Fragment>
     <TextField {...startProps} />
     <TextField {...endProps} />
-  </>
+  </React.Fragment>
 );
 
-describe('DateRangePicker', () => {
-  it('allows select range', () => {
-    const component = mount(
-      <DesktopDateRangePicker
-        open
-        renderInput={defaultRangeRenderInput}
-        onChange={jest.fn()}
-        value={[
-          utilsToUse.date(new Date('2018-01-01T00:00:00.000Z')),
-          utilsToUse.date(new Date('2018-01-31T00:00:00.000Z')),
-        ]}
-      />
-    );
-
-    expect(component.find('[data-mui-test="DateRangeHighlight"]').length).toBe(31);
-  });
+describe('<DateRangePicker />', () => {
+  const render = createClientRender({ strict: false });
 
   it('allows disabling dates', () => {
-    const component = mount(
-      <DesktopDateRangePicker
-        open
+    render(
+      <StaticDateRangePicker
         renderInput={defaultRangeRenderInput}
         minDate={new Date('2005-01-01')}
-        shouldDisableDate={date => isWeekend(utilsToUse.toJsDate(date))}
+        shouldDisableDate={(date) => isWeekend(utilsToUse.toJsDate(date))}
         onChange={jest.fn()}
         value={[
           utilsToUse.date('2018-01-01T00:00:00.000'),
@@ -45,32 +31,12 @@ describe('DateRangePicker', () => {
     );
 
     expect(
-      component
-        .find('button[data-mui-test="DateRangeDay"]')
-        .filterWhere(wrapper => !wrapper.prop('disabled')).length
-    ).toBe(59);
+      getAllByMuiTest('DateRangeDay').filter((day) => day.getAttribute('disabled') !== undefined)
+    ).toHaveLength(31);
   });
 
-  it('prop: calendars', () => {
-    const component = mount(
-      <DesktopDateRangePicker
-        open
-        renderInput={defaultRangeRenderInput}
-        calendars={3}
-        onChange={jest.fn()}
-        value={[
-          utilsToUse.date('2018-01-01T00:00:00.000'),
-          utilsToUse.date('2018-01-31T00:00:00.000'),
-        ]}
-      />
-    );
-
-    expect(component.find('Calendar').length).toBe(3);
-    expect(component.find('button[data-mui-test="DateRangeDay"]').length).toBe(90);
-  });
-
-  it(`doesn't crashes if opening picker with invalid date input`, () => {
-    const component = mount(
+  it(`doesn't crashes if opening picker with invalid date input`, async () => {
+    render(
       <DesktopDateRangePicker
         open
         renderInput={defaultRangeRenderInput}
@@ -80,11 +46,24 @@ describe('DateRangePicker', () => {
       />
     );
 
-    component
-      .find('input')
-      .at(1)
-      .simulate('focus');
+    fireEvent.focus(screen.getAllByRole('textbox')[0]);
 
-    expect(component.find('div[role="tooltip"]').length).toBe(1);
+    await waitFor(() => screen.getByRole('tooltip'));
+    expect(screen.getByRole('tooltip')).toBeInTheDocument();
+  });
+
+  it('prop – `renderDay` should be called and render days', async () => {
+    render(
+      <DesktopDateRangePicker
+        open
+        renderInput={defaultRangeRenderInput}
+        onChange={jest.fn()}
+        renderDay={(day) => <div key={String(day)} data-mui-test="renderDayCalled" />}
+        value={[null, null]}
+      />
+    );
+
+    await waitFor(() => screen.getByRole('tooltip'));
+    expect(getAllByMuiTest('renderDayCalled').length).not.toBe(0);
   });
 });

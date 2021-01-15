@@ -1,6 +1,6 @@
 import * as React from 'react';
+import TextField from '@material-ui/core/TextField';
 import { ReactWrapper } from 'enzyme';
-import { TextField } from '@material-ui/core';
 import { mount, utilsToUse } from './test-utils';
 import { DesktopDateTimePicker, DateTimePickerProps } from '../DateTimePicker/DateTimePicker';
 
@@ -16,13 +16,13 @@ describe('e2e - DesktopDateTimePicker', () => {
     jest.clearAllMocks();
     component = mount(
       <DesktopDateTimePicker
-        autoOk
         onChange={onChangeMock}
         onClose={onCloseMock}
         onOpen={onOpenMock}
+        disableMaskedInput
         inputFormat={format}
         OpenPickerButtonProps={{ id: 'keyboard-button' }}
-        renderInput={props => <TextField {...props} />}
+        renderInput={(props) => <TextField {...props} />}
         value={utilsToUse.date('2018-01-01T00:00:00.000Z')}
       />
     );
@@ -34,7 +34,7 @@ describe('e2e - DesktopDateTimePicker', () => {
 
   it('Should open modal with picker on click', () => {
     component.find('button#keyboard-button').simulate('click');
-    expect(component.find('WithStyles(ForwardRef(Popover))').props().open).toBeTruthy();
+    expect(component.find('div[role="dialog"]').length).toBe(1);
     expect(onOpenMock).toHaveBeenCalled();
   });
 

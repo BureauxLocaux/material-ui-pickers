@@ -1,15 +1,15 @@
 import * as React from 'react';
 import clsx from 'clsx';
-import Code from './Code';
 import CodeIcon from '@material-ui/icons/Code';
 import CopyIcon from '@material-ui/icons/FileCopy';
+import { makeStyles, IconButton, Collapse, Tooltip } from '@material-ui/core';
 import GithubIcon from '_shared/svgIcons/GithubIcon';
 import { copy } from 'utils/helpers';
 import { useSnackbar } from 'notistack';
 import { GITHUB_EDIT_URL } from '_constants';
 import { replaceGetFormatStrings } from 'utils/utilsService';
+import Code from './Code';
 import { withUtilsService, UtilsContext } from './UtilsServiceContext';
-import { makeStyles, IconButton, Collapse, Tooltip } from '@material-ui/core';
 
 interface ExampleProps {
   testId: string;
@@ -17,7 +17,7 @@ interface ExampleProps {
   source: { raw: string; relativePath: string; default: React.FC<any> };
 }
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   exampleTitle: {
     marginBottom: 8,
     '@media(max-width: 600px)': {
@@ -93,7 +93,7 @@ function Example({ source, testId, paddingBottom }: ExampleProps) {
   );
 
   return (
-    <>
+    <React.Fragment>
       <Collapse key="code" in={expanded}>
         <div className={classes.sourceToolbar}>
           <Tooltip title="Propose file change">
@@ -107,23 +107,19 @@ function Example({ source, testId, paddingBottom }: ExampleProps) {
               </IconButton>
             </a>
           </Tooltip>
-
           <Tooltip title="Copy source">
             <IconButton onClick={copySource}>
               <CopyIcon />
             </IconButton>
           </Tooltip>
-
           <IconButton className={classes.toolbarSourceBtn} onClick={() => setExpanded(!expanded)}>
             <CodeIcon />
           </IconButton>
         </div>
-
         <div className={classes.codeContainer}>
           {replacedSource && <Code children={replacedSource} />}
         </div>
       </Collapse>
-
       <div
         data-mui-test={testId}
         className={clsx(classes.pickers, { [classes.paddingBottom]: paddingBottom })}
@@ -133,10 +129,9 @@ function Example({ source, testId, paddingBottom }: ExampleProps) {
             <CodeIcon />
           </IconButton>
         </Tooltip>
-
         <ExampleComponent key={currentLib} />
       </div>
-    </>
+    </React.Fragment>
   );
 }
 

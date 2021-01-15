@@ -1,73 +1,80 @@
 import * as React from 'react';
 import * as PropTypes from 'prop-types';
-import { date } from '../constants/prop-types';
 import { useUtils } from '../_shared/hooks/useUtils';
 import { MobileWrapper } from '../wrappers/MobileWrapper';
-import { DateRangeInputProps } from './DateRangePickerInput';
 import { withDefaultProps } from '../_shared/withDefaultProps';
 import { useParsedDate } from '../_shared/hooks/date-helpers-hooks';
 import { withDateAdapterProp } from '../_shared/withDateAdapterProp';
-import { DesktopPopperWrapper } from '../wrappers/DesktopPopperWrapper';
 import { makeWrapperComponent } from '../wrappers/makeWrapperComponent';
-import { ResponsivePopperWrapper } from '../wrappers/ResponsiveWrapper';
-import { defaultMinDate, defaultMaxDate } from '../constants/prop-types';
+import { ResponsiveTooltipWrapper } from '../wrappers/ResponsiveWrapper';
+import { defaultMinDate, defaultMaxDate, date } from '../constants/prop-types';
+import { DesktopTooltipWrapper } from '../wrappers/DesktopTooltipWrapper';
 import { SomeWrapper, ExtendWrapper, StaticWrapper } from '../wrappers/Wrapper';
+import { RangeInput, AllSharedDateRangePickerProps, DateRange } from './RangeTypes';
 import { makeValidationHook, ValidationProps } from '../_shared/hooks/useValidation';
 import { usePickerState, PickerStateValueManager } from '../_shared/hooks/usePickerState';
 import { DateRangePickerView, ExportedDateRangePickerViewProps } from './DateRangePickerView';
-import { DateRangePickerInput, ExportedDateRangePickerInputProps } from './DateRangePickerInput';
 import {
-  DateRange as DateRangeType,
-  RangeInput,
-  AllSharedDateRangePickerProps,
-} from './RangeTypes';
+  DateRangePickerInput,
+  ExportedDateRangePickerInputProps,
+  DateRangeInputProps,
+} from './DateRangePickerInput';
 import {
   parseRangeInputValue,
   validateDateRange,
   DateRangeValidationError,
 } from '../_helpers/date-utils';
 
-export interface BaseDateRangePickerProps
-  extends ExportedDateRangePickerViewProps,
-    ValidationProps<DateRangeValidationError, RangeInput>,
+export interface BaseDateRangePickerProps<TDate>
+  extends ExportedDateRangePickerViewProps<TDate>,
+    ValidationProps<DateRangeValidationError, RangeInput<TDate>>,
     ExportedDateRangePickerInputProps {
   /**
    * Text for start input label and toolbar placeholder
+   *
    * @default "Start"
    */
   startText?: React.ReactNode;
   /**
    * Text for end input label and toolbar placeholder
+   *
    * @default "end"
    */
   endText?: React.ReactNode;
 }
 
+type RangePickerComponent<TWrapper extends SomeWrapper> = <TDate>(
+  props: BaseDateRangePickerProps<TDate> &
+    ExtendWrapper<TWrapper> &
+    AllSharedDateRangePickerProps<TDate> &
+    React.RefAttributes<HTMLDivElement>
+) => JSX.Element;
+
 export const useDateRangeValidation = makeValidationHook<
   DateRangeValidationError,
   RangeInput,
-  BaseDateRangePickerProps
+  BaseDateRangePickerProps<any>
 >(validateDateRange, {
   defaultValidationError: [null, null],
   isSameError: (a, b) => a[1] === b[1] && a[0] === b[0],
 });
 
-export function makeRangePicker<TWrapper extends SomeWrapper>(name: string, Wrapper: TWrapper) {
-  const WrapperComponent = makeWrapperComponent<DateRangeInputProps, RangeInput, DateRange>(
-    Wrapper,
-    {
-      KeyboardDateInputComponent: DateRangePickerInput,
-      PureDateInputComponent: DateRangePickerInput,
-    }
-  );
+export function makeRangePicker<TWrapper extends SomeWrapper>(
+  name: string,
+  Wrapper: TWrapper
+): RangePickerComponent<TWrapper> {
+  const WrapperComponent = makeWrapperComponent<DateRangeInputProps>(Wrapper, {
+    KeyboardDateInputComponent: DateRangePickerInput,
+    PureDateInputComponent: DateRangePickerInput,
+  });
 
-  const rangePickerValueManager: PickerStateValueManager<RangeInput, DateRange> = {
+  const rangePickerValueManager: PickerStateValueManager<any, any> = {
     emptyValue: [null, null],
     parseInput: parseRangeInputValue,
     areValuesEqual: (utils, a, b) => utils.isEqual(a[0], b[0]) && utils.isEqual(a[1], b[1]),
   };
 
-  function RangePickerWithStateAndWrapper({
+  function RangePickerWithStateAndWrapper<TDate>({
     calendars,
     value,
     onChange,
@@ -75,10 +82,12 @@ export function makeRangePicker<TWrapper extends SomeWrapper>(name: string, Wrap
     startText = 'Start',
     endText = 'End',
     inputFormat: passedInputFormat,
-    minDate: __minDate = defaultMinDate,
-    maxDate: __maxDate = defaultMaxDate,
+    minDate: __minDate = defaultMinDate as TDate,
+    maxDate: __maxDate = defaultMaxDate as TDate,
     ...other
-  }: BaseDateRangePickerProps & AllSharedDateRangePickerProps & ExtendWrapper<TWrapper>) {
+  }: BaseDateRangePickerProps<TDate> &
+    AllSharedDateRangePickerProps<TDate> &
+    ExtendWrapper<TWrapper>) {
     const utils = useUtils();
     const minDate = useParsedDate(__minDate);
     const maxDate = useParsedDate(__maxDate);
@@ -99,10 +108,10 @@ export function makeRangePicker<TWrapper extends SomeWrapper>(name: string, Wrap
       maxDate,
     };
 
-    const { pickerProps, inputProps, wrapperProps } = usePickerState<RangeInput, DateRange>(
-      pickerStateProps,
-      rangePickerValueManager
-    );
+    const { pickerProps, inputProps, wrapperProps } = usePickerState<
+      RangeInput<TDate>,
+      DateRange<TDate>
+    >(pickerStateProps, rangePickerValueManager);
 
     const validationError = useDateRangeValidation(value, restProps);
 
@@ -119,7 +128,7 @@ export function makeRangePicker<TWrapper extends SomeWrapper>(name: string, Wrap
 
     return (
       <WrapperComponent wrapperProps={wrapperProps} DateInputProps={DateInputProps} {...restProps}>
-        <DateRangePickerView
+        <DateRangePickerView<any>
           open={wrapperProps.open}
           DateInputProps={DateInputProps}
           calendars={calendars}
@@ -146,40 +155,32 @@ export function makeRangePicker<TWrapper extends SomeWrapper>(name: string, Wrap
     withDateAdapterProp(RangePickerWithStateAndWrapper)
   );
 
+  // @ts-ignore @see lib/src/Picker/makePickerWithState.tsx:95
   return React.forwardRef<
     HTMLDivElement,
     React.ComponentProps<typeof RangePickerWithStateAndWrapper>
   >((props, ref) => <FinalPickerComponent {...(props as any)} forwardedRef={ref} />);
 }
 
-// TODO replace with new export type syntax
-export type DateRange = DateRangeType;
-
 export const DateRangePicker = makeRangePicker(
   'MuiPickersDateRangePicker',
-  ResponsivePopperWrapper
+  ResponsiveTooltipWrapper
 );
 
 export type DateRangePickerProps = React.ComponentProps<typeof DateRangePicker>;
 
 export const DesktopDateRangePicker = makeRangePicker(
-  'MuiPickersDesktopDateRangePicker',
-  DesktopPopperWrapper
+  'MuiDesktopDateRangePicker',
+  DesktopTooltipWrapper
 );
 
 export type DesktopDateRangePickerProps = React.ComponentProps<typeof DesktopDateRangePicker>;
 
-export const MobileDateRangePicker = makeRangePicker(
-  'MuiPickersMobileDateRangePicker',
-  MobileWrapper
-);
+export const MobileDateRangePicker = makeRangePicker('MuiMobileDateRangePicker', MobileWrapper);
 
 export type MobileDateRangePickerProps = React.ComponentProps<typeof MobileDateRangePicker>;
 
-export const StaticDateRangePicker = makeRangePicker(
-  'MuiPickersStaticDateRangePicker',
-  StaticWrapper
-);
+export const StaticDateRangePicker = makeRangePicker('MuiStaticDateRangePicker', StaticWrapper);
 
 export type StaticDateRangePickerProps = React.ComponentProps<typeof StaticDateRangePicker>;
 

@@ -1,5 +1,6 @@
+/* eslint-disable no-console */
 // @ts-nocheck
-import React from 'react';
+import * as React from 'react';
 import Grid from '@material-ui/core/Grid';
 import TextField from '@material-ui/core/TextField';
 import { Formik, Form, Field, FieldProps } from 'formik';
@@ -23,7 +24,6 @@ function DatePickerField({
 
   return (
     <DatePicker
-      autoOk
       clearable
       minDate={minDate}
       maxDate={maxDate}
@@ -59,8 +59,8 @@ function DatePickerField({
         }
       }}
       // Make sure that your 3d param is set to `false` on order to not clear errors
-      onChange={date => form.setFieldValue(name, date, false)}
-      renderInput={props => (
+      onChange={(date) => form.setFieldValue(name, date, false)}
+      renderInput={(props) => (
         <TextField
           {...props}
           name={name}
@@ -93,7 +93,7 @@ export default function FormikExample() {
       {({ values, errors }) => (
         <Form>
           <Grid container>
-            <Grid item container justify="center" xs={12}>
+            <Grid item container justifyContent="center" xs={12}>
               <Field
                 name="date"
                 disablePast
@@ -102,7 +102,6 @@ export default function FormikExample() {
                 getShouldDisableDateError={validateDatePickerValue}
               />
             </Grid>
-
             <Grid item xs={12} sm={12} style={{ margin: '24px' }}>
               <pre>
                 <code>{JSON.stringify({ errors, values }, null, 2)}</code>

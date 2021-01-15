@@ -1,12 +1,11 @@
 import { ParsableDate } from '../constants/prop-types';
-import { MaterialUiPickersDate } from '../typings/date';
 import { MuiPickersAdapter } from '../_shared/hooks/useUtils';
 import { DateValidationProps, validateDate } from '../_helpers/date-utils';
 import { TimeValidationProps, validateTime } from '../_helpers/time-utils';
 
-export function validateDateAndTime(
+export function validateDateAndTime<TDate>(
   utils: MuiPickersAdapter,
-  value: MaterialUiPickersDate | ParsableDate,
+  value: unknown | ParsableDate,
   {
     minDate,
     maxDate,
@@ -14,7 +13,7 @@ export function validateDateAndTime(
     shouldDisableDate,
     disablePast,
     ...timeValidationProps
-  }: DateValidationProps & TimeValidationProps
+  }: DateValidationProps<TDate> & TimeValidationProps<TDate>
 ) {
   const dateValidationResult = validateDate(utils, value, {
     minDate,

@@ -12,9 +12,9 @@ interface FadeTransitionProps {
 
 const animationDuration = 500;
 export const useStyles = makeStyles(
-  theme => {
+  (theme) => {
     return {
-      transitionContainer: {
+      root: {
         display: 'block',
         position: 'relative',
       },
@@ -62,8 +62,8 @@ export const FadeTransitionGroup: React.FC<FadeTransitionProps> = ({
 
   return (
     <TransitionGroup
-      className={clsx(classes.transitionContainer, className)}
-      childFactory={element =>
+      className={clsx(classes.root, className)}
+      childFactory={(element) =>
         React.cloneElement(element, {
           classNames: transitionClasses,
         })
@@ -75,8 +75,9 @@ export const FadeTransitionGroup: React.FC<FadeTransitionProps> = ({
         key={transKey}
         timeout={{ appear: animationDuration, enter: animationDuration / 2, exit: 0 }}
         classNames={transitionClasses}
-        children={children}
-      />
+      >
+        {children}
+      </CSSTransition>
     </TransitionGroup>
   );
 };

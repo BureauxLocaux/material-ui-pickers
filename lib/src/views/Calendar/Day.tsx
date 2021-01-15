@@ -2,20 +2,20 @@ import * as React from 'react';
 import * as PropTypes from 'prop-types';
 import clsx from 'clsx';
 import ButtonBase, { ButtonBaseProps } from '@material-ui/core/ButtonBase';
+import { makeStyles, fade } from '@material-ui/core/styles';
 import { ExtendMui } from '../../typings/helpers';
 import { onSpaceOrEnter } from '../../_helpers/utils';
 import { useUtils } from '../../_shared/hooks/useUtils';
-import { MaterialUiPickersDate } from '../../typings/date';
-import { makeStyles, fade } from '@material-ui/core/styles';
 import { DAY_SIZE, DAY_MARGIN } from '../../constants/dimensions';
-import { withDefaultProps } from '../../_shared/withDefaultProps';
-import { FORCE_FINISH_PICKER } from '../../_shared/hooks/usePickerState';
+import { useDefaultProps } from '../../_shared/withDefaultProps';
+import { useCanAutoFocus } from '../../_shared/hooks/useCanAutoFocus';
+import { PickerSelectionState } from '../../_shared/hooks/usePickerState';
 
 const muiComponentConfig = { name: 'MuiPickersDay' };
 
 export const useStyles = makeStyles(
-  theme => ({
-    day: {
+  (theme) => ({
+    root: {
       ...theme.typography.caption,
       width: DAY_SIZE,
       height: DAY_SIZE,
@@ -29,54 +29,55 @@ export const useStyles = makeStyles(
       },
       '&:focus': {
         backgroundColor: fade(theme.palette.action.active, theme.palette.action.hoverOpacity),
-        '&$daySelected': {
+        '&$selected': {
           willChange: 'background-color',
           backgroundColor: theme.palette.primary.dark,
         },
+      },
+      '&$selected': {
+        color: theme.palette.primary.contrastText,
+        backgroundColor: theme.palette.primary.main,
+        fontWeight: theme.typography.fontWeightMedium,
+        transition: theme.transitions.create('background-color', {
+          duration: theme.transitions.duration.short,
+        }),
+        '&:hover': {
+          willChange: 'background-color',
+          backgroundColor: theme.palette.primary.dark,
+        },
+      },
+      '&$disabled': {
+        color: theme.palette.text.secondary,
       },
     },
     dayWithMargin: {
       margin: `0 ${DAY_MARGIN}px`,
     },
     dayOutsideMonth: {
-      color: theme.palette.text.hint,
+      color: theme.palette.text.secondary,
     },
     hiddenDaySpacingFiller: {
       visibility: 'hidden',
     },
     today: {
-      '&:not($daySelected)': {
-        border: `1px solid ${theme.palette.text.hint}`,
+      '&:not($selected)': {
+        border: `1px solid ${theme.palette.text.secondary}`,
       },
-    },
-    daySelected: {
-      color: theme.palette.primary.contrastText,
-      backgroundColor: theme.palette.primary.main,
-      fontWeight: theme.typography.fontWeightMedium,
-      transition: theme.transitions.create('background-color', {
-        duration: theme.transitions.duration.short,
-      }),
-      '&:hover': {
-        willChange: 'background-color',
-        backgroundColor: theme.palette.primary.dark,
-      },
-    },
-    dayDisabled: {
-      pointerEvents: 'none',
-      color: theme.palette.text.hint,
     },
     dayLabel: {
       // need for overrides
     },
+    selected: {},
+    disabled: {},
   }),
   muiComponentConfig
 );
 
-export interface DayProps extends ExtendMui<ButtonBaseProps> {
+export interface DayProps<TDate> extends ExtendMui<ButtonBaseProps> {
   /**
    * The date to show.
    */
-  day: MaterialUiPickersDate;
+  day: TDate;
   /**
    * Is focused by keyboard navigation.
    */
@@ -115,43 +116,55 @@ export interface DayProps extends ExtendMui<ButtonBaseProps> {
   disableMargin?: boolean;
   /**
    * Display disabled dates outside the current month.
+   *
    * @default false
    */
   showDaysOutsideCurrentMonth?: boolean;
   /**
    * Disable highlighting today date with a circle.
+   *
    * @default false
    */
   disableHighlightToday?: boolean;
-  onDayFocus: (day: MaterialUiPickersDate) => void;
-  onDaySelect: (day: MaterialUiPickersDate, isFinish: boolean | symbol) => void;
+  /**
+   * Allow selecting the same date (fire onChange even if same date is selected).
+   *
+   * @default false
+   */
+  allowSameDateSelection?: boolean;
+  onDayFocus?: (day: TDate) => void;
+  onDaySelect: (day: TDate, isFinish: PickerSelectionState) => void;
 }
 
-const PureDay: React.FC<DayProps> = ({
-  allowKeyboardControl,
-  className,
-  day,
-  disabled,
-  disableHighlightToday = false,
-  disableMargin = false,
-  focusable = false,
-  focused = false,
-  hidden,
-  inCurrentMonth: isInCurrentMonth,
-  isAnimating,
-  onClick,
-  onDayFocus,
-  onDaySelect,
-  onFocus,
-  onKeyDown,
-  selected,
-  showDaysOutsideCurrentMonth = false,
-  today: isToday,
-  ...other
-}) => {
-  const ref = React.useRef<HTMLButtonElement>(null);
+function PureDay<TDate>(props: DayProps<TDate>) {
+  const {
+    allowKeyboardControl,
+    allowSameDateSelection = false,
+    className,
+    day,
+    disabled = false,
+    disableHighlightToday = false,
+    disableMargin = false,
+    focusable = false,
+    focused = false,
+    hidden,
+    inCurrentMonth: isInCurrentMonth,
+    isAnimating,
+    onClick,
+    onDayFocus,
+    onDaySelect,
+    onFocus,
+    onKeyDown,
+    selected = false,
+    showDaysOutsideCurrentMonth = false,
+    today: isToday = false,
+    ...other
+  } = useDefaultProps(props, muiComponentConfig);
+
   const utils = useUtils();
   const classes = useStyles();
+  const canAutoFocus = useCanAutoFocus();
+  const ref = React.useRef<HTMLButtonElement>(null);
 
   React.useEffect(() => {
     if (
@@ -160,14 +173,15 @@ const PureDay: React.FC<DayProps> = ({
       !isAnimating &&
       isInCurrentMonth &&
       ref.current &&
-      allowKeyboardControl
+      allowKeyboardControl &&
+      canAutoFocus
     ) {
       ref.current.focus();
     }
-  }, [allowKeyboardControl, disabled, focused, isAnimating, isInCurrentMonth]);
+  }, [allowKeyboardControl, canAutoFocus, disabled, focused, isAnimating, isInCurrentMonth]);
 
   const handleFocus = (event: React.FocusEvent<HTMLButtonElement>) => {
-    if (!focused) {
+    if (!focused && onDayFocus) {
       onDayFocus(day);
     }
 
@@ -177,8 +191,10 @@ const PureDay: React.FC<DayProps> = ({
   };
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (!allowSameDateSelection && selected) return;
+
     if (!disabled) {
-      onDaySelect(day, true);
+      onDaySelect(day, 'finish');
     }
 
     if (onClick) {
@@ -188,15 +204,14 @@ const PureDay: React.FC<DayProps> = ({
 
   const handleKeyDown = onSpaceOrEnter(() => {
     if (!disabled) {
-      onDaySelect(day, FORCE_FINISH_PICKER);
+      onDaySelect(day, 'finish');
     }
   }, onKeyDown);
 
   const dayClassName = clsx(
-    classes.day,
+    classes.root,
     {
-      [classes.daySelected]: selected,
-      [classes.dayDisabled]: disabled,
+      [classes.selected]: selected,
       [classes.dayWithMargin]: !disableMargin,
       [classes.today]: !disableHighlightToday && isToday,
       [classes.dayOutsideMonth]: !isInCurrentMonth && showDaysOutsideCurrentMonth,
@@ -214,6 +229,7 @@ const PureDay: React.FC<DayProps> = ({
       ref={ref}
       centerRipple
       data-mui-test="day"
+      disabled={disabled}
       aria-label={utils.format(day, 'fullDate')}
       tabIndex={focused || focusable ? 0 : -1}
       className={dayClassName}
@@ -225,9 +241,9 @@ const PureDay: React.FC<DayProps> = ({
       <span className={classes.dayLabel}>{utils.format(day, 'dayOfMonth')}</span>
     </ButtonBase>
   );
-};
+}
 
-export const areDayPropsEqual = (prevProps: DayProps, nextProps: DayProps) => {
+export const areDayPropsEqual = (prevProps: DayProps<any>, nextProps: DayProps<any>) => {
   return (
     prevProps.focused === nextProps.focused &&
     prevProps.focusable === nextProps.focusable &&
@@ -240,23 +256,19 @@ export const areDayPropsEqual = (prevProps: DayProps, nextProps: DayProps) => {
     prevProps.showDaysOutsideCurrentMonth === nextProps.showDaysOutsideCurrentMonth &&
     prevProps.disableHighlightToday === nextProps.disableHighlightToday &&
     prevProps.className === nextProps.className &&
+    prevProps.inCurrentMonth === nextProps.inCurrentMonth &&
     prevProps.onDayFocus === nextProps.onDayFocus &&
     prevProps.onDaySelect === nextProps.onDaySelect
   );
 };
 
-export const Day = withDefaultProps(muiComponentConfig, React.memo(PureDay, areDayPropsEqual));
-
-PureDay.displayName = 'Day';
+PureDay.displayName = 'PickersDay';
 
 PureDay.propTypes = {
-  today: PropTypes.bool,
   disabled: PropTypes.bool,
   selected: PropTypes.bool,
+  today: PropTypes.bool,
 };
 
-PureDay.defaultProps = {
-  disabled: false,
-  today: false,
-  selected: false,
-};
+// keep typings of original component and not loose generic
+export const Day = (React.memo(PureDay, areDayPropsEqual) as unknown) as typeof PureDay;

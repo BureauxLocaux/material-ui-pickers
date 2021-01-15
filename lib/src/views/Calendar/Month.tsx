@@ -13,7 +13,7 @@ export interface MonthProps {
 }
 
 export const useStyles = makeStyles(
-  theme => ({
+  (theme) => ({
     root: {
       flex: '1 0 33.33%',
       display: 'flex',
@@ -27,31 +27,26 @@ export const useStyles = makeStyles(
         color: theme.palette.primary.main,
         fontWeight: theme.typography.fontWeightMedium,
       },
+      '&:disabled': {
+        pointerEvents: 'none',
+        color: theme.palette.text.secondary,
+      },
+      '&$selected': {
+        color: theme.palette.primary.main,
+        fontWeight: theme.typography.fontWeightMedium,
+      },
     },
-    monthSelected: {
-      color: theme.palette.primary.main,
-      fontWeight: theme.typography.fontWeightMedium,
-    },
-    monthDisabled: {
-      pointerEvents: 'none',
-      color: theme.palette.text.hint,
-    },
+    selected: {},
   }),
   { name: 'MuiPickersMonth' }
 );
 
-export const Month: React.FC<MonthProps> = ({
-  children,
-  disabled,
-  onSelect,
-  selected,
-  value,
-  ...other
-}) => {
+export const Month: React.FC<MonthProps> = (props) => {
+  const { disabled, onSelect, selected, value, ...other } = props;
   const classes = useStyles();
-  const handleSelection = React.useCallback(() => {
+  const handleSelection = () => {
     onSelect(value);
-  }, [onSelect, value]);
+  };
 
   return (
     <Typography
@@ -59,15 +54,13 @@ export const Month: React.FC<MonthProps> = ({
       role="button"
       component="div"
       className={clsx(classes.root, {
-        [classes.monthSelected]: selected,
-        [classes.monthDisabled]: disabled,
+        [classes.selected]: selected,
       })}
       tabIndex={disabled ? -1 : 0}
       onClick={handleSelection}
       onKeyDown={onSpaceOrEnter(handleSelection)}
       color={selected ? 'primary' : undefined}
       variant={selected ? 'h5' : 'subtitle1'}
-      children={children}
       {...other}
     />
   );

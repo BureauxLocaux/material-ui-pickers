@@ -1,11 +1,10 @@
-import { DateRange } from './DateRangePicker';
-import { MaterialUiPickersDate } from '../typings/date';
+import { DateRange } from './RangeTypes';
 import { MuiPickersAdapter } from '../_shared/hooks/useUtils';
 
 interface CalculateRangeChangeOptions {
   utils: MuiPickersAdapter;
   range: DateRange;
-  newDate: MaterialUiPickersDate;
+  newDate: unknown;
   currentlySelectingRangeEnd: 'start' | 'end';
 }
 
@@ -21,11 +20,11 @@ export function calculateRangeChange({
     return Boolean(end) && utils.isAfter(selectedDate, end)
       ? { nextSelection: 'end', newRange: [selectedDate, null] }
       : { nextSelection: 'end', newRange: [selectedDate, end] };
-  } else {
-    return Boolean(start) && utils.isBefore(selectedDate, start)
-      ? { nextSelection: 'end', newRange: [selectedDate, null] }
-      : { nextSelection: 'start', newRange: [start, selectedDate] };
   }
+
+  return Boolean(start) && utils.isBefore(selectedDate, start)
+    ? { nextSelection: 'end', newRange: [selectedDate, null] }
+    : { nextSelection: 'start', newRange: [start, selectedDate] };
 }
 
 export function calculateRangePreview(options: CalculateRangeChangeOptions): DateRange {
@@ -41,8 +40,5 @@ export function calculateRangePreview(options: CalculateRangeChangeOptions): Dat
   }
 
   const [previewStart, previewEnd] = newRange;
-  // prettier-ignore
-  return options.currentlySelectingRangeEnd === 'end'
-    ? [end, previewEnd]
-    : [previewStart, start];
+  return options.currentlySelectingRangeEnd === 'end' ? [end, previewEnd] : [previewStart, start];
 }

@@ -15,14 +15,14 @@ export interface SlideTransitionProps extends Omit<CSSTransitionProps, 'timeout'
 
 export const slideAnimationDuration = 350;
 export const useStyles = makeStyles(
-  theme => {
+  (theme) => {
     const slideTransition = theme.transitions.create('transform', {
       duration: slideAnimationDuration,
       easing: 'cubic-bezier(0.35, 0.8, 0.4, 1)',
     });
 
     return {
-      transitionContainer: {
+      root: {
         display: 'block',
         position: 'relative',
         overflowX: 'hidden',
@@ -77,22 +77,22 @@ export const SlideTransition: React.SFC<SlideTransitionProps> = ({
 }) => {
   const classes = useStyles();
   if (reduceAnimations) {
-    return <div className={className}>{children}</div>;
+    return <div className={clsx(classes.root, className)}>{children}</div>;
   }
 
   const transitionClasses = {
     exit: classes.slideExit,
     enterActive: classes.slideEnterActive,
     // @ts-ignore
-    enter: classes['slideEnter-' + slideDirection],
+    enter: classes[`slideEnter-${slideDirection}`],
     // @ts-ignore
-    exitActive: classes['slideExitActiveLeft-' + slideDirection],
+    exitActive: classes[`slideExitActiveLeft-${slideDirection}`],
   };
 
   return (
     <TransitionGroup
-      className={clsx(classes.transitionContainer, className)}
-      childFactory={element =>
+      className={clsx(classes.root, className)}
+      childFactory={(element) =>
         React.cloneElement(element, {
           classNames: transitionClasses,
         })
@@ -104,9 +104,10 @@ export const SlideTransition: React.SFC<SlideTransitionProps> = ({
         key={transKey}
         timeout={slideAnimationDuration}
         classNames={transitionClasses}
-        children={children}
         {...other}
-      />
+      >
+        {children}
+      </CSSTransition>
     </TransitionGroup>
   );
 };

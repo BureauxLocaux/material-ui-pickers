@@ -1,8 +1,8 @@
 import * as React from 'react';
 import ReactMarkdown from 'react-markdown';
-import notifications from '../notifications.json';
 import { useSnackbar } from 'notistack';
-import { makeStyles } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
+import notifications from '../notifications.json';
 
 interface Notification {
   id: string;
@@ -32,7 +32,7 @@ export function useNotification() {
     );
 
     const notificationToShow = (notifications as Notification[]).find(
-      notification => !viewedNotifications.some(viewedId => viewedId === notification.id)
+      (notification) => !viewedNotifications.some((viewedId) => viewedId === notification.id)
     );
 
     if (notificationToShow) {

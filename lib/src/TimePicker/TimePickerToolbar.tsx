@@ -1,14 +1,14 @@
 import * as React from 'react';
 import clsx from 'clsx';
+import { useTheme, makeStyles } from '@material-ui/core/styles';
 import ToolbarText from '../_shared/ToolbarText';
-import ToolbarButton from '../_shared/ToolbarButton';
+import { ToolbarButton } from '../_shared/ToolbarButton';
 import PickerToolbar from '../_shared/PickerToolbar';
 import { arrayIncludes } from '../_helpers/utils';
 import { useUtils } from '../_shared/hooks/useUtils';
-import { MaterialUiPickersDate } from '../typings/date';
-import { ToolbarComponentProps } from '../Picker/Picker';
+import { PickerOnChangeFn } from '../_shared/hooks/useViews';
 import { withDefaultProps } from '../_shared/withDefaultProps';
-import { useTheme, makeStyles } from '@material-ui/core/styles';
+import { ToolbarComponentProps } from '../Picker/SharedPickerProps';
 import { convertToMeridiem, getMeridiem } from '../_helpers/time-utils';
 
 const muiComponentConfig = { name: 'MuiPickersTimePickerToolbar' };
@@ -53,18 +53,18 @@ export const useStyles = makeStyles(
   muiComponentConfig
 );
 
-export function useMeridiemMode(
-  date: MaterialUiPickersDate,
+export function useMeridiemMode<TDate>(
+  date: TDate,
   ampm: boolean | undefined,
-  onChange: (date: MaterialUiPickersDate, isFinished?: boolean) => void
+  onChange: PickerOnChangeFn<TDate>
 ) {
-  const utils = useUtils();
+  const utils = useUtils<TDate>();
   const meridiemMode = getMeridiem(date, utils);
 
   const handleMeridiemChange = React.useCallback(
     (mode: 'am' | 'pm') => {
-      const timeWithMeridiem = convertToMeridiem(date, mode, Boolean(ampm), utils);
-      onChange(timeWithMeridiem, false);
+      const timeWithMeridiem = convertToMeridiem<TDate>(date, mode, Boolean(ampm), utils);
+      onChange(timeWithMeridiem, 'partial');
     },
     [ampm, date, onChange, utils]
   );
@@ -88,6 +88,7 @@ export const TimePickerToolbar: React.FC<ToolbarComponentProps> = withDefaultPro
     toggleMobileKeyboardView,
     toolbarTitle = 'SELECT TIME',
     views,
+    ...other
   }) => {
     const utils = useUtils();
     const theme = useTheme();
@@ -95,7 +96,7 @@ export const TimePickerToolbar: React.FC<ToolbarComponentProps> = withDefaultPro
     const showAmPmControl = Boolean(ampm && !ampmInClock);
     const { meridiemMode, handleMeridiemChange } = useMeridiemMode(date, ampm, onChange);
 
-    const formatHours = (time: MaterialUiPickersDate) =>
+    const formatHours = (time: unknown) =>
       ampm ? utils.format(time, 'hours12h') : utils.format(time, 'hours24h');
 
     const separator = (
@@ -116,6 +117,7 @@ export const TimePickerToolbar: React.FC<ToolbarComponentProps> = withDefaultPro
         isMobileKeyboardViewOpen={isMobileKeyboardViewOpen}
         toggleMobileKeyboardView={toggleMobileKeyboardView}
         penIconClassName={clsx({ [classes.penIconLandscape]: isLandscape })}
+        {...other}
       >
         <div
           className={clsx(classes.hourMinuteLabel, {
@@ -133,9 +135,7 @@ export const TimePickerToolbar: React.FC<ToolbarComponentProps> = withDefaultPro
               value={date ? formatHours(date) : '--'}
             />
           )}
-
           {arrayIncludes(views, ['hours', 'minutes']) && separator}
-
           {arrayIncludes(views, 'minutes') && (
             <ToolbarButton
               data-mui-test="minutes"
@@ -146,9 +146,7 @@ export const TimePickerToolbar: React.FC<ToolbarComponentProps> = withDefaultPro
               value={date ? utils.format(date, 'minutes') : '--'}
             />
           )}
-
           {arrayIncludes(views, ['minutes', 'seconds']) && separator}
-
           {arrayIncludes(views, 'seconds') && (
             <ToolbarButton
               data-mui-test="seconds"
@@ -159,7 +157,6 @@ export const TimePickerToolbar: React.FC<ToolbarComponentProps> = withDefaultPro
             />
           )}
         </div>
-
         {showAmPmControl && (
           <div
             className={clsx(classes.ampmSelection, {
@@ -175,7 +172,6 @@ export const TimePickerToolbar: React.FC<ToolbarComponentProps> = withDefaultPro
               value={utils.getMeridiemText('am')}
               onClick={() => handleMeridiemChange('am')}
             />
-
             <ToolbarButton
               disableRipple
               variant="subtitle2"

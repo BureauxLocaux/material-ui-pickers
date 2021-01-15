@@ -3,8 +3,6 @@
  */
 import * as React from 'react';
 import PropTypes from 'prop-types';
-import { UtilClassToUse } from './test-utils';
-import { LocalizationProvider } from '../LocalizationProvider';
 import {
   act,
   buildQueries,
@@ -15,6 +13,8 @@ import {
   render as testingLibraryRender,
   prettyDOM,
 } from '@testing-library/react/pure';
+import { UtilClassToUse } from './test-utils';
+import LocalizationProvider from '../LocalizationProvider';
 
 // holes are *All* selectors which aren't necessary for id selectors
 const [queryDescriptionOf, , getDescriptionOf, , findDescriptionOf] = buildQueries(
@@ -110,7 +110,7 @@ const fireEvent = Object.assign(rtlFireEvent, {
       error.stack = error.stack
         ? error.stack
             .split('\n')
-            .filter(line => !/at Function.key/.test(line))
+            .filter((line) => !/at Function.key/.test(line))
             .join('\n')
         : '';
       throw error;
@@ -149,7 +149,7 @@ const fireEvent = Object.assign(rtlFireEvent, {
       error.stack = error.stack
         ? error.stack
             .split('\n')
-            .filter(line => !/at Function.key/.test(line))
+            .filter((line) => !/at Function.key/.test(line))
             .join('\n')
         : '';
       throw error;
